@@ -1,0 +1,28 @@
+{
+  "name": "Country",
+  "fields": [
+    {
+      "fieldName": "countryName",
+      "fieldType": "String"
+    }
+  ],
+  "relationships": [
+    {
+      "relationshipType": "one-to-one",
+      "otherEntityName": "region",
+      "otherEntityRelationshipName": "country",
+      "relationshipName": "region",
+      "ownerSide": true
+    }
+  ],
+  "entityTableName": "country",
+  "dto": "no",
+  "pagination": "pagination",
+  "service": "serviceClass",
+  "jpaMetamodelFiltering": true,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["testApp"],
+  "changelogDate": "20211010124344"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "Region",
+  "fields": [
+    {
+      "fieldName": "regionName",
+      "fieldType": "String"
+    }
+  ],
+  "relationships": [],
+  "entityTableName": "region",
+  "dto": "no",
+  "pagination": "pagination",
+  "service": "serviceClass",
+  "jpaMetamodelFiltering": true,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["testApp"],
+  "changelogDate": "20211010124244"
+}
