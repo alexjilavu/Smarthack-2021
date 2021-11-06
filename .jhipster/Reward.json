@@ -1,0 +1,37 @@
+{
+  "name": "Reward",
+  "fields": [
+    {
+      "fieldName": "value",
+      "fieldType": "Long"
+    },
+    {
+      "fieldName": "content",
+      "fieldType": "String"
+    }
+  ],
+  "relationships": [
+    {
+      "relationshipType": "many-to-one",
+      "otherEntityName": "icon",
+      "otherEntityRelationshipName": "reward",
+      "relationshipName": "icon"
+    },
+    {
+      "relationshipType": "many-to-one",
+      "otherEntityName": "company",
+      "otherEntityRelationshipName": "rewards",
+      "relationshipName": "company"
+    }
+  ],
+  "entityTableName": "reward",
+  "dto": "no",
+  "pagination": "no",
+  "service": "no",
+  "jpaMetamodelFiltering": false,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["smarthack"],
+  "changelogDate": "20211106150830"
+}

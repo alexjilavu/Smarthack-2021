@@ -1,0 +1,53 @@
+{
+  "name": "Challenge",
+  "fields": [
+    {
+      "fieldName": "title",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "message",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "iconUrl",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "rewardAmount",
+      "fieldType": "Long"
+    }
+  ],
+  "relationships": [
+    {
+      "relationshipType": "many-to-one",
+      "otherEntityName": "icon",
+      "otherEntityRelationshipName": "challenge",
+      "relationshipName": "icon"
+    },
+    {
+      "relationshipType": "many-to-many",
+      "otherEntityName": "hashTag",
+      "otherEntityRelationshipName": "challenges",
+      "relationshipName": "hashTags",
+      "ownerSide": true
+    },
+    {
+      "relationshipType": "many-to-many",
+      "otherEntityName": "appUser",
+      "otherEntityRelationshipName": "completedChallenges",
+      "relationshipName": "usersThatCompleted",
+      "ownerSide": false
+    }
+  ],
+  "entityTableName": "challenge",
+  "dto": "no",
+  "pagination": "no",
+  "service": "no",
+  "jpaMetamodelFiltering": false,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["smarthack"],
+  "changelogDate": "20211106150430"
+}

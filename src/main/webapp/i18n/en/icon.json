@@ -1,0 +1,25 @@
+{
+  "smarthackApp": {
+    "icon": {
+      "home": {
+        "title": "Icons",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Icon",
+        "createOrEditLabel": "Create or edit a Icon",
+        "notFound": "No Icons found"
+      },
+      "created": "A new Icon is created with identifier {{ param }}",
+      "updated": "A Icon is updated with identifier {{ param }}",
+      "deleted": "A Icon is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Icon {{ id }}?"
+      },
+      "detail": {
+        "title": "Icon"
+      },
+      "id": "ID",
+      "name": "Name",
+      "url": "Url"
+    }
+  }
+}

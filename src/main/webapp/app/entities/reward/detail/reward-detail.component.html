@@ -1,0 +1,48 @@
+<div class="row justify-content-center">
+  <div class="col-8">
+    <div *ngIf="reward">
+      <h2 data-cy="rewardDetailsHeading"><span jhiTranslate="smarthackApp.reward.detail.title">Reward</span></h2>
+
+      <hr />
+
+      <jhi-alert-error></jhi-alert-error>
+
+      <jhi-alert></jhi-alert>
+
+      <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="global.field.id">ID</span></dt>
+        <dd>
+          <span>{{ reward.id }}</span>
+        </dd>
+        <dt><span jhiTranslate="smarthackApp.reward.value">Value</span></dt>
+        <dd>
+          <span>{{ reward.value }}</span>
+        </dd>
+        <dt><span jhiTranslate="smarthackApp.reward.content">Content</span></dt>
+        <dd>
+          <span>{{ reward.content }}</span>
+        </dd>
+        <dt><span jhiTranslate="smarthackApp.reward.icon">Icon</span></dt>
+        <dd>
+          <div *ngIf="reward.icon">
+            <a [routerLink]="['/icon', reward.icon?.id, 'view']">{{ reward.icon?.id }}</a>
+          </div>
+        </dd>
+        <dt><span jhiTranslate="smarthackApp.reward.company">Company</span></dt>
+        <dd>
+          <div *ngIf="reward.company">
+            <a [routerLink]="['/company', reward.company?.id, 'view']">{{ reward.company?.id }}</a>
+          </div>
+        </dd>
+      </dl>
+
+      <button type="submit" (click)="previousState()" class="btn btn-info" data-cy="entityDetailsBackButton">
+        <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+      </button>
+
+      <button type="button" [routerLink]="['/reward', reward.id, 'edit']" class="btn btn-primary">
+        <fa-icon icon="pencil-alt"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+      </button>
+    </div>
+  </div>
+</div>

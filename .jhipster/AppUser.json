@@ -1,0 +1,39 @@
+{
+  "name": "AppUser",
+  "fields": [
+    {
+      "fieldName": "walletAddress",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "walletPassword",
+      "fieldType": "String"
+    }
+  ],
+  "relationships": [
+    {
+      "relationshipType": "one-to-one",
+      "otherEntityName": "user",
+      "otherEntityRelationshipName": "appUser",
+      "relationshipName": "appUser",
+      "ownerSide": true
+    },
+    {
+      "relationshipType": "many-to-many",
+      "otherEntityName": "challenge",
+      "otherEntityRelationshipName": "usersThatCompleted",
+      "relationshipName": "completedChallenges",
+      "ownerSide": true
+    }
+  ],
+  "entityTableName": "app_user",
+  "dto": "no",
+  "pagination": "no",
+  "service": "no",
+  "jpaMetamodelFiltering": false,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["smarthack"],
+  "changelogDate": "20211106150330"
+}

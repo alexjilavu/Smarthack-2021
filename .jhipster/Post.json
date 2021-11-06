@@ -1,0 +1,37 @@
+{
+  "name": "Post",
+  "fields": [
+    {
+      "fieldName": "content",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "imageUrl",
+      "fieldType": "byte[]",
+      "fieldTypeBlobContent": "any"
+    },
+    {
+      "fieldName": "publishedBy",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "noOfLikes",
+      "fieldType": "Integer"
+    },
+    {
+      "fieldName": "noOfShares",
+      "fieldType": "Integer"
+    }
+  ],
+  "relationships": [],
+  "entityTableName": "post",
+  "dto": "no",
+  "pagination": "no",
+  "service": "no",
+  "jpaMetamodelFiltering": false,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["smarthack"],
+  "changelogDate": "20211106150630"
+}

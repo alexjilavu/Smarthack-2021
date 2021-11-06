@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.5.xsd">
+    <!--
+        Added the constraints for entity Challenge.
+    -->
+    <changeSet id="20211106150430-2" author="jhipster">
+
+        <addForeignKeyConstraint baseColumnNames="icon_id"
+                                 baseTableName="challenge"
+                                 constraintName="fk_challenge__icon_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="icon"/>
+
+        <addForeignKeyConstraint baseColumnNames="challenge_id"
+                                 baseTableName="rel_challenge__hash_tags"
+                                 constraintName="fk_rel_challenge__hash_tags__challenge_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="challenge"/>
+
+        <addForeignKeyConstraint baseColumnNames="hash_tags_id"
+                                 baseTableName="rel_challenge__hash_tags"
+                                 constraintName="fk_rel_challenge__hash_tags__hash_tags_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="hash_tag"/>
+    </changeSet>
+</databaseChangeLog>

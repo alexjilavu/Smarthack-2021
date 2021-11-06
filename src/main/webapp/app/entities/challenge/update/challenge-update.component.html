@@ -1,0 +1,88 @@
+<div class="row justify-content-center">
+  <div class="col-8">
+    <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
+      <h2 id="jhi-challenge-heading" data-cy="ChallengeCreateUpdateHeading" jhiTranslate="smarthackApp.challenge.home.createOrEditLabel">
+        Create or edit a Challenge
+      </h2>
+
+      <div>
+        <jhi-alert-error></jhi-alert-error>
+
+        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
+          <label class="form-control-label" jhiTranslate="global.field.id" for="field_id">ID</label>
+          <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.challenge.title" for="field_title">Title</label>
+          <input type="text" class="form-control" name="title" id="field_title" data-cy="title" formControlName="title" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.challenge.message" for="field_message">Message</label>
+          <input type="text" class="form-control" name="message" id="field_message" data-cy="message" formControlName="message" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.challenge.iconUrl" for="field_iconUrl">Icon Url</label>
+          <input type="text" class="form-control" name="iconUrl" id="field_iconUrl" data-cy="iconUrl" formControlName="iconUrl" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.challenge.rewardAmount" for="field_rewardAmount"
+            >Reward Amount</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="rewardAmount"
+            id="field_rewardAmount"
+            data-cy="rewardAmount"
+            formControlName="rewardAmount"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.challenge.icon" for="field_icon">Icon</label>
+          <select class="form-control" id="field_icon" data-cy="icon" name="icon" formControlName="icon">
+            <option [ngValue]="null"></option>
+            <option
+              [ngValue]="iconOption.id === editForm.get('icon')!.value?.id ? editForm.get('icon')!.value : iconOption"
+              *ngFor="let iconOption of iconsSharedCollection; trackBy: trackIconById"
+            >
+              {{ iconOption.id }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label jhiTranslate="smarthackApp.challenge.hashTags" for="field_hashTags">Hash Tags</label>
+          <select class="form-control" id="field_hashTags" data-cy="hashTags" multiple name="hashTags" formControlName="hashTags">
+            <option
+              [ngValue]="getSelectedHashTag(hashTagOption, editForm.get('hashTags')!.value)"
+              *ngFor="let hashTagOption of hashTagsSharedCollection; trackBy: trackHashTagById"
+            >
+              {{ hashTagOption.id }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" id="cancel-save" data-cy="entityCreateCancelButton" class="btn btn-secondary" (click)="previousState()">
+          <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+
+        <button
+          type="submit"
+          id="save-entity"
+          data-cy="entityCreateSaveButton"
+          [disabled]="editForm.invalid || isSaving"
+          class="btn btn-primary"
+        >
+          <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

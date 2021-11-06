@@ -1,0 +1,107 @@
+<div class="row justify-content-center">
+  <div class="col-8">
+    <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
+      <h2 id="jhi-post-heading" data-cy="PostCreateUpdateHeading" jhiTranslate="smarthackApp.post.home.createOrEditLabel">
+        Create or edit a Post
+      </h2>
+
+      <div>
+        <jhi-alert-error></jhi-alert-error>
+
+        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
+          <label class="form-control-label" jhiTranslate="global.field.id" for="field_id">ID</label>
+          <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.post.content" for="field_content">Content</label>
+          <input type="text" class="form-control" name="content" id="field_content" data-cy="content" formControlName="content" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.post.imageUrl" for="field_imageUrl">Image Url</label>
+          <div>
+            <div *ngIf="editForm.get('imageUrl')!.value" class="form-text text-danger clearfix">
+              <a
+                class="pull-left"
+                (click)="openFile(editForm.get('imageUrl')!.value, editForm.get('imageUrlContentType')!.value)"
+                jhiTranslate="entity.action.open"
+                >open</a
+              ><br />
+              <span class="pull-left"
+                >{{ editForm.get('imageUrlContentType')!.value }}, {{ byteSize(editForm.get('imageUrl')!.value) }}</span
+              >
+              <button
+                type="button"
+                (click)="editForm.patchValue({ imageUrl: null }); editForm.patchValue({ imageUrlContentType: null })"
+                class="btn btn-secondary btn-xs pull-right"
+              >
+                <fa-icon icon="times"></fa-icon>
+              </button>
+            </div>
+            <input
+              type="file"
+              id="file_imageUrl"
+              data-cy="imageUrl"
+              (change)="setFileData($event, 'imageUrl', false)"
+              jhiTranslate="entity.action.addblob"
+            />
+          </div>
+          <input type="hidden" class="form-control" name="imageUrl" id="field_imageUrl" data-cy="imageUrl" formControlName="imageUrl" />
+          <input
+            type="hidden"
+            class="form-control"
+            name="imageUrlContentType"
+            id="field_imageUrlContentType"
+            formControlName="imageUrlContentType"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.post.publishedBy" for="field_publishedBy">Published By</label>
+          <input
+            type="text"
+            class="form-control"
+            name="publishedBy"
+            id="field_publishedBy"
+            data-cy="publishedBy"
+            formControlName="publishedBy"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.post.noOfLikes" for="field_noOfLikes">No Of Likes</label>
+          <input type="number" class="form-control" name="noOfLikes" id="field_noOfLikes" data-cy="noOfLikes" formControlName="noOfLikes" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.post.noOfShares" for="field_noOfShares">No Of Shares</label>
+          <input
+            type="number"
+            class="form-control"
+            name="noOfShares"
+            id="field_noOfShares"
+            data-cy="noOfShares"
+            formControlName="noOfShares"
+          />
+        </div>
+      </div>
+
+      <div>
+        <button type="button" id="cancel-save" data-cy="entityCreateCancelButton" class="btn btn-secondary" (click)="previousState()">
+          <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+
+        <button
+          type="submit"
+          id="save-entity"
+          data-cy="entityCreateSaveButton"
+          [disabled]="editForm.invalid || isSaving"
+          class="btn btn-primary"
+        >
+          <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

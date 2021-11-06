@@ -1,0 +1,94 @@
+<div class="row justify-content-center">
+  <div class="col-8">
+    <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
+      <h2 id="jhi-app-user-heading" data-cy="AppUserCreateUpdateHeading" jhiTranslate="smarthackApp.appUser.home.createOrEditLabel">
+        Create or edit a App User
+      </h2>
+
+      <div>
+        <jhi-alert-error></jhi-alert-error>
+
+        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
+          <label class="form-control-label" jhiTranslate="global.field.id" for="field_id">ID</label>
+          <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.appUser.walletAddress" for="field_walletAddress"
+            >Wallet Address</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="walletAddress"
+            id="field_walletAddress"
+            data-cy="walletAddress"
+            formControlName="walletAddress"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.appUser.walletPassword" for="field_walletPassword"
+            >Wallet Password</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="walletPassword"
+            id="field_walletPassword"
+            data-cy="walletPassword"
+            formControlName="walletPassword"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-control-label" jhiTranslate="smarthackApp.appUser.appUser" for="field_appUser">App User</label>
+          <select class="form-control" id="field_appUser" data-cy="appUser" name="appUser" formControlName="appUser">
+            <option [ngValue]="null"></option>
+            <option
+              [ngValue]="userOption.id === editForm.get('appUser')!.value?.id ? editForm.get('appUser')!.value : userOption"
+              *ngFor="let userOption of usersSharedCollection; trackBy: trackUserById"
+            >
+              {{ userOption.id }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label jhiTranslate="smarthackApp.appUser.completedChallenges" for="field_completedChallenges">Completed Challenges</label>
+          <select
+            class="form-control"
+            id="field_completedChallenges"
+            data-cy="completedChallenges"
+            multiple
+            name="completedChallenges"
+            formControlName="completedChallenges"
+          >
+            <option
+              [ngValue]="getSelectedChallenge(challengeOption, editForm.get('completedChallenges')!.value)"
+              *ngFor="let challengeOption of challengesSharedCollection; trackBy: trackChallengeById"
+            >
+              {{ challengeOption.id }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" id="cancel-save" data-cy="entityCreateCancelButton" class="btn btn-secondary" (click)="previousState()">
+          <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+
+        <button
+          type="submit"
+          id="save-entity"
+          data-cy="entityCreateSaveButton"
+          [disabled]="editForm.invalid || isSaving"
+          class="btn btn-primary"
+        >
+          <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

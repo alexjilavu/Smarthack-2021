@@ -1,0 +1,27 @@
+{
+  "smarthackApp": {
+    "reward": {
+      "home": {
+        "title": "Rewards",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Reward",
+        "createOrEditLabel": "Create or edit a Reward",
+        "notFound": "No Rewards found"
+      },
+      "created": "A new Reward is created with identifier {{ param }}",
+      "updated": "A Reward is updated with identifier {{ param }}",
+      "deleted": "A Reward is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Reward {{ id }}?"
+      },
+      "detail": {
+        "title": "Reward"
+      },
+      "id": "ID",
+      "value": "Value",
+      "content": "Content",
+      "icon": "Icon",
+      "company": "Company"
+    }
+  }
+}

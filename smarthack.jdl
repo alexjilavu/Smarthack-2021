@@ -1,0 +1,82 @@
+
+
+entity AppUser {
+	walletAddress String
+    walletPassword String
+}
+
+entity Challenge {
+	title String
+    message String
+    iconUrl String
+	rewardAmount Long
+}
+
+entity HashTag {
+	name String
+    company String
+}
+
+entity Post {
+	content String
+    imageUrl Blob
+    publishedBy String
+    noOfLikes Integer
+    noOfShares Integer
+}
+
+entity Company {
+	name String
+}
+
+entity Reward {
+    value Long
+    content String
+}
+
+entity Icon {
+	name String
+    url String
+}
+
+entity Transaction {
+	senderAddress String
+    receiverAddress String
+    amount Long
+}
+
+relationship OneToOne {
+  AppUser{appUser} to User
+}
+
+relationship ManyToOne {
+	Reward{icon} to Icon
+    Challenge{icon} to Icon
+}
+
+relationship OneToMany {
+	Company{rewards} to Reward{company}
+}
+
+relationship ManyToMany {
+	Challenge{hashTags} to HashTag{challenges}
+    AppUser{completedChallenges} to Challenge{usersThatCompleted}
+}
+
+// Set an angular suffix
+// angularSuffix * with mySuffix
+application {
+	config {
+    	baseName smarthack
+        authenticationType jwt
+        buildTool gradle
+        devDatabaseType postgresql
+        prodDatabaseType postgresql
+        languages [en]
+        packageName com.credex.fs.digital
+        serverPort 8080
+        cacheProvider no
+    }
+    
+    entities *
+}

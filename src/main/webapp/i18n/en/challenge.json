@@ -1,0 +1,30 @@
+{
+  "smarthackApp": {
+    "challenge": {
+      "home": {
+        "title": "Challenges",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Challenge",
+        "createOrEditLabel": "Create or edit a Challenge",
+        "notFound": "No Challenges found"
+      },
+      "created": "A new Challenge is created with identifier {{ param }}",
+      "updated": "A Challenge is updated with identifier {{ param }}",
+      "deleted": "A Challenge is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Challenge {{ id }}?"
+      },
+      "detail": {
+        "title": "Challenge"
+      },
+      "id": "ID",
+      "title": "Title",
+      "message": "Message",
+      "iconUrl": "Icon Url",
+      "rewardAmount": "Reward Amount",
+      "icon": "Icon",
+      "hashTags": "Hash Tags",
+      "usersThatCompleted": "Users That Completed"
+    }
+  }
+}

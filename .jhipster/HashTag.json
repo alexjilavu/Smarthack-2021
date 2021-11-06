@@ -1,0 +1,32 @@
+{
+  "name": "HashTag",
+  "fields": [
+    {
+      "fieldName": "name",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "company",
+      "fieldType": "String"
+    }
+  ],
+  "relationships": [
+    {
+      "relationshipType": "many-to-many",
+      "otherEntityName": "challenge",
+      "otherEntityRelationshipName": "hashTags",
+      "relationshipName": "challenges",
+      "ownerSide": false
+    }
+  ],
+  "entityTableName": "hash_tag",
+  "dto": "no",
+  "pagination": "no",
+  "service": "no",
+  "jpaMetamodelFiltering": false,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["smarthack"],
+  "changelogDate": "20211106150530"
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Transaction",
+  "fields": [
+    {
+      "fieldName": "senderAddress",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "receiverAddress",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "amount",
+      "fieldType": "Long"
+    }
+  ],
+  "relationships": [],
+  "entityTableName": "transaction",
+  "dto": "no",
+  "pagination": "no",
+  "service": "no",
+  "jpaMetamodelFiltering": false,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["smarthack"],
+  "changelogDate": "20211106151030"
+}
