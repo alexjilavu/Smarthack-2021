@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.credex.fs.digital.IntegrationTest;
 import com.credex.fs.digital.domain.Transaction;
 import com.credex.fs.digital.repository.TransactionRepository;
+import com.credex.fs.digital.service.criteria.TransactionCriteria;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,6 +38,7 @@ class TransactionResourceIT {
 
     private static final Long DEFAULT_AMOUNT = 1L;
     private static final Long UPDATED_AMOUNT = 2L;
+    private static final Long SMALLER_AMOUNT = 1L - 1L;
 
     private static final String ENTITY_API_URL = "/api/transactions";
     private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
@@ -156,6 +158,324 @@ class TransactionResourceIT {
             .andExpect(jsonPath("$.senderAddress").value(DEFAULT_SENDER_ADDRESS))
             .andExpect(jsonPath("$.receiverAddress").value(DEFAULT_RECEIVER_ADDRESS))
             .andExpect(jsonPath("$.amount").value(DEFAULT_AMOUNT.intValue()));
+    }
+
+    @Test
+    @Transactional
+    void getTransactionsByIdFiltering() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        Long id = transaction.getId();
+
+        defaultTransactionShouldBeFound("id.equals=" + id);
+        defaultTransactionShouldNotBeFound("id.notEquals=" + id);
+
+        defaultTransactionShouldBeFound("id.greaterThanOrEqual=" + id);
+        defaultTransactionShouldNotBeFound("id.greaterThan=" + id);
+
+        defaultTransactionShouldBeFound("id.lessThanOrEqual=" + id);
+        defaultTransactionShouldNotBeFound("id.lessThan=" + id);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsBySenderAddressIsEqualToSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where senderAddress equals to DEFAULT_SENDER_ADDRESS
+        defaultTransactionShouldBeFound("senderAddress.equals=" + DEFAULT_SENDER_ADDRESS);
+
+        // Get all the transactionList where senderAddress equals to UPDATED_SENDER_ADDRESS
+        defaultTransactionShouldNotBeFound("senderAddress.equals=" + UPDATED_SENDER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsBySenderAddressIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where senderAddress not equals to DEFAULT_SENDER_ADDRESS
+        defaultTransactionShouldNotBeFound("senderAddress.notEquals=" + DEFAULT_SENDER_ADDRESS);
+
+        // Get all the transactionList where senderAddress not equals to UPDATED_SENDER_ADDRESS
+        defaultTransactionShouldBeFound("senderAddress.notEquals=" + UPDATED_SENDER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsBySenderAddressIsInShouldWork() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where senderAddress in DEFAULT_SENDER_ADDRESS or UPDATED_SENDER_ADDRESS
+        defaultTransactionShouldBeFound("senderAddress.in=" + DEFAULT_SENDER_ADDRESS + "," + UPDATED_SENDER_ADDRESS);
+
+        // Get all the transactionList where senderAddress equals to UPDATED_SENDER_ADDRESS
+        defaultTransactionShouldNotBeFound("senderAddress.in=" + UPDATED_SENDER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsBySenderAddressIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where senderAddress is not null
+        defaultTransactionShouldBeFound("senderAddress.specified=true");
+
+        // Get all the transactionList where senderAddress is null
+        defaultTransactionShouldNotBeFound("senderAddress.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsBySenderAddressContainsSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where senderAddress contains DEFAULT_SENDER_ADDRESS
+        defaultTransactionShouldBeFound("senderAddress.contains=" + DEFAULT_SENDER_ADDRESS);
+
+        // Get all the transactionList where senderAddress contains UPDATED_SENDER_ADDRESS
+        defaultTransactionShouldNotBeFound("senderAddress.contains=" + UPDATED_SENDER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsBySenderAddressNotContainsSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where senderAddress does not contain DEFAULT_SENDER_ADDRESS
+        defaultTransactionShouldNotBeFound("senderAddress.doesNotContain=" + DEFAULT_SENDER_ADDRESS);
+
+        // Get all the transactionList where senderAddress does not contain UPDATED_SENDER_ADDRESS
+        defaultTransactionShouldBeFound("senderAddress.doesNotContain=" + UPDATED_SENDER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByReceiverAddressIsEqualToSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where receiverAddress equals to DEFAULT_RECEIVER_ADDRESS
+        defaultTransactionShouldBeFound("receiverAddress.equals=" + DEFAULT_RECEIVER_ADDRESS);
+
+        // Get all the transactionList where receiverAddress equals to UPDATED_RECEIVER_ADDRESS
+        defaultTransactionShouldNotBeFound("receiverAddress.equals=" + UPDATED_RECEIVER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByReceiverAddressIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where receiverAddress not equals to DEFAULT_RECEIVER_ADDRESS
+        defaultTransactionShouldNotBeFound("receiverAddress.notEquals=" + DEFAULT_RECEIVER_ADDRESS);
+
+        // Get all the transactionList where receiverAddress not equals to UPDATED_RECEIVER_ADDRESS
+        defaultTransactionShouldBeFound("receiverAddress.notEquals=" + UPDATED_RECEIVER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByReceiverAddressIsInShouldWork() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where receiverAddress in DEFAULT_RECEIVER_ADDRESS or UPDATED_RECEIVER_ADDRESS
+        defaultTransactionShouldBeFound("receiverAddress.in=" + DEFAULT_RECEIVER_ADDRESS + "," + UPDATED_RECEIVER_ADDRESS);
+
+        // Get all the transactionList where receiverAddress equals to UPDATED_RECEIVER_ADDRESS
+        defaultTransactionShouldNotBeFound("receiverAddress.in=" + UPDATED_RECEIVER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByReceiverAddressIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where receiverAddress is not null
+        defaultTransactionShouldBeFound("receiverAddress.specified=true");
+
+        // Get all the transactionList where receiverAddress is null
+        defaultTransactionShouldNotBeFound("receiverAddress.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByReceiverAddressContainsSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where receiverAddress contains DEFAULT_RECEIVER_ADDRESS
+        defaultTransactionShouldBeFound("receiverAddress.contains=" + DEFAULT_RECEIVER_ADDRESS);
+
+        // Get all the transactionList where receiverAddress contains UPDATED_RECEIVER_ADDRESS
+        defaultTransactionShouldNotBeFound("receiverAddress.contains=" + UPDATED_RECEIVER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByReceiverAddressNotContainsSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where receiverAddress does not contain DEFAULT_RECEIVER_ADDRESS
+        defaultTransactionShouldNotBeFound("receiverAddress.doesNotContain=" + DEFAULT_RECEIVER_ADDRESS);
+
+        // Get all the transactionList where receiverAddress does not contain UPDATED_RECEIVER_ADDRESS
+        defaultTransactionShouldBeFound("receiverAddress.doesNotContain=" + UPDATED_RECEIVER_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByAmountIsEqualToSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where amount equals to DEFAULT_AMOUNT
+        defaultTransactionShouldBeFound("amount.equals=" + DEFAULT_AMOUNT);
+
+        // Get all the transactionList where amount equals to UPDATED_AMOUNT
+        defaultTransactionShouldNotBeFound("amount.equals=" + UPDATED_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByAmountIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where amount not equals to DEFAULT_AMOUNT
+        defaultTransactionShouldNotBeFound("amount.notEquals=" + DEFAULT_AMOUNT);
+
+        // Get all the transactionList where amount not equals to UPDATED_AMOUNT
+        defaultTransactionShouldBeFound("amount.notEquals=" + UPDATED_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByAmountIsInShouldWork() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where amount in DEFAULT_AMOUNT or UPDATED_AMOUNT
+        defaultTransactionShouldBeFound("amount.in=" + DEFAULT_AMOUNT + "," + UPDATED_AMOUNT);
+
+        // Get all the transactionList where amount equals to UPDATED_AMOUNT
+        defaultTransactionShouldNotBeFound("amount.in=" + UPDATED_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByAmountIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where amount is not null
+        defaultTransactionShouldBeFound("amount.specified=true");
+
+        // Get all the transactionList where amount is null
+        defaultTransactionShouldNotBeFound("amount.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByAmountIsGreaterThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where amount is greater than or equal to DEFAULT_AMOUNT
+        defaultTransactionShouldBeFound("amount.greaterThanOrEqual=" + DEFAULT_AMOUNT);
+
+        // Get all the transactionList where amount is greater than or equal to UPDATED_AMOUNT
+        defaultTransactionShouldNotBeFound("amount.greaterThanOrEqual=" + UPDATED_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByAmountIsLessThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where amount is less than or equal to DEFAULT_AMOUNT
+        defaultTransactionShouldBeFound("amount.lessThanOrEqual=" + DEFAULT_AMOUNT);
+
+        // Get all the transactionList where amount is less than or equal to SMALLER_AMOUNT
+        defaultTransactionShouldNotBeFound("amount.lessThanOrEqual=" + SMALLER_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByAmountIsLessThanSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where amount is less than DEFAULT_AMOUNT
+        defaultTransactionShouldNotBeFound("amount.lessThan=" + DEFAULT_AMOUNT);
+
+        // Get all the transactionList where amount is less than UPDATED_AMOUNT
+        defaultTransactionShouldBeFound("amount.lessThan=" + UPDATED_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllTransactionsByAmountIsGreaterThanSomething() throws Exception {
+        // Initialize the database
+        transactionRepository.saveAndFlush(transaction);
+
+        // Get all the transactionList where amount is greater than DEFAULT_AMOUNT
+        defaultTransactionShouldNotBeFound("amount.greaterThan=" + DEFAULT_AMOUNT);
+
+        // Get all the transactionList where amount is greater than SMALLER_AMOUNT
+        defaultTransactionShouldBeFound("amount.greaterThan=" + SMALLER_AMOUNT);
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is returned.
+     */
+    private void defaultTransactionShouldBeFound(String filter) throws Exception {
+        restTransactionMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$.[*].id").value(hasItem(transaction.getId().intValue())))
+            .andExpect(jsonPath("$.[*].senderAddress").value(hasItem(DEFAULT_SENDER_ADDRESS)))
+            .andExpect(jsonPath("$.[*].receiverAddress").value(hasItem(DEFAULT_RECEIVER_ADDRESS)))
+            .andExpect(jsonPath("$.[*].amount").value(hasItem(DEFAULT_AMOUNT.intValue())));
+
+        // Check, that the count call also returns 1
+        restTransactionMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("1"));
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is not returned.
+     */
+    private void defaultTransactionShouldNotBeFound(String filter) throws Exception {
+        restTransactionMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$").isEmpty());
+
+        // Check, that the count call also returns 0
+        restTransactionMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("0"));
     }
 
     @Test

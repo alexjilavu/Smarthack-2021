@@ -2,6 +2,9 @@ package com.credex.fs.digital.web.rest;
 
 import com.credex.fs.digital.domain.Transaction;
 import com.credex.fs.digital.repository.TransactionRepository;
+import com.credex.fs.digital.service.TransactionQueryService;
+import com.credex.fs.digital.service.TransactionService;
+import com.credex.fs.digital.service.criteria.TransactionCriteria;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,10 +14,15 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -22,7 +30,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("/api")
-@Transactional
 public class TransactionResource {
 
     private final Logger log = LoggerFactory.getLogger(TransactionResource.class);
@@ -32,10 +39,20 @@ public class TransactionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final TransactionService transactionService;
+
     private final TransactionRepository transactionRepository;
 
-    public TransactionResource(TransactionRepository transactionRepository) {
+    private final TransactionQueryService transactionQueryService;
+
+    public TransactionResource(
+        TransactionService transactionService,
+        TransactionRepository transactionRepository,
+        TransactionQueryService transactionQueryService
+    ) {
+        this.transactionService = transactionService;
         this.transactionRepository = transactionRepository;
+        this.transactionQueryService = transactionQueryService;
     }
 
     /**
@@ -51,7 +68,7 @@ public class TransactionResource {
         if (transaction.getId() != null) {
             throw new BadRequestAlertException("A new transaction cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Transaction result = transactionRepository.save(transaction);
+        Transaction result = transactionService.save(transaction);
         return ResponseEntity
             .created(new URI("/api/transactions/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
@@ -85,7 +102,7 @@ public class TransactionResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Transaction result = transactionRepository.save(transaction);
+        Transaction result = transactionService.save(transaction);
         return ResponseEntity
             .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, transaction.getId().toString()))
@@ -120,22 +137,7 @@ public class TransactionResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Optional<Transaction> result = transactionRepository
-            .findById(transaction.getId())
-            .map(existingTransaction -> {
-                if (transaction.getSenderAddress() != null) {
-                    existingTransaction.setSenderAddress(transaction.getSenderAddress());
-                }
-                if (transaction.getReceiverAddress() != null) {
-                    existingTransaction.setReceiverAddress(transaction.getReceiverAddress());
-                }
-                if (transaction.getAmount() != null) {
-                    existingTransaction.setAmount(transaction.getAmount());
-                }
-
-                return existingTransaction;
-            })
-            .map(transactionRepository::save);
+        Optional<Transaction> result = transactionService.partialUpdate(transaction);
 
         return ResponseUtil.wrapOrNotFound(
             result,
@@ -146,12 +148,28 @@ public class TransactionResource {
     /**
      * {@code GET  /transactions} : get all the transactions.
      *
+     * @param pageable the pagination information.
+     * @param criteria the criteria which the requested entities should match.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of transactions in body.
      */
     @GetMapping("/transactions")
-    public List<Transaction> getAllTransactions() {
-        log.debug("REST request to get all Transactions");
-        return transactionRepository.findAll();
+    public ResponseEntity<List<Transaction>> getAllTransactions(TransactionCriteria criteria, Pageable pageable) {
+        log.debug("REST request to get Transactions by criteria: {}", criteria);
+        Page<Transaction> page = transactionQueryService.findByCriteria(criteria, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    /**
+     * {@code GET  /transactions/count} : count all the transactions.
+     *
+     * @param criteria the criteria which the requested entities should match.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the count in body.
+     */
+    @GetMapping("/transactions/count")
+    public ResponseEntity<Long> countTransactions(TransactionCriteria criteria) {
+        log.debug("REST request to count Transactions by criteria: {}", criteria);
+        return ResponseEntity.ok().body(transactionQueryService.countByCriteria(criteria));
     }
 
     /**
@@ -163,7 +181,7 @@ public class TransactionResource {
     @GetMapping("/transactions/{id}")
     public ResponseEntity<Transaction> getTransaction(@PathVariable Long id) {
         log.debug("REST request to get Transaction : {}", id);
-        Optional<Transaction> transaction = transactionRepository.findById(id);
+        Optional<Transaction> transaction = transactionService.findOne(id);
         return ResponseUtil.wrapOrNotFound(transaction);
     }
 
@@ -176,7 +194,7 @@ public class TransactionResource {
     @DeleteMapping("/transactions/{id}")
     public ResponseEntity<Void> deleteTransaction(@PathVariable Long id) {
         log.debug("REST request to delete Transaction : {}", id);
-        transactionRepository.deleteById(id);
+        transactionService.delete(id);
         return ResponseEntity
             .noContent()
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))

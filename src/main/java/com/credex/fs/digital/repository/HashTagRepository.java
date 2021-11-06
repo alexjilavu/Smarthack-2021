@@ -9,4 +9,4 @@ import org.springframework.stereotype.Repository;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface HashTagRepository extends JpaRepository<HashTag, Long> {}
+public interface HashTagRepository extends JpaRepository<HashTag, Long>, JpaSpecificationExecutor<HashTag> {}

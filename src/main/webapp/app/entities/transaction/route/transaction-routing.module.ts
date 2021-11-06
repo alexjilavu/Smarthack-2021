@@ -11,6 +11,9 @@ const transactionRoute: Routes = [
   {
     path: '',
     component: TransactionComponent,
+    data: {
+      defaultSort: 'id,asc',
+    },
     canActivate: [UserRouteAccessService],
   },
   {

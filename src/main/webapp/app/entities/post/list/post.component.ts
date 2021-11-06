@@ -1,8 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
+import { combineLatest } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { IPost } from '../post.model';
+
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/config/pagination.constants';
 import { PostService } from '../service/post.service';
 import { PostDeleteDialogComponent } from '../delete/post-delete-dialog.component';
 import { DataUtils } from 'app/core/util/data-util.service';
@@ -14,25 +18,45 @@ import { DataUtils } from 'app/core/util/data-util.service';
 export class PostComponent implements OnInit {
   posts?: IPost[];
   isLoading = false;
+  totalItems = 0;
+  itemsPerPage = ITEMS_PER_PAGE;
+  page?: number;
+  predicate!: string;
+  ascending!: boolean;
+  ngbPaginationPage = 1;
 
-  constructor(protected postService: PostService, protected dataUtils: DataUtils, protected modalService: NgbModal) {}
+  constructor(
+    protected postService: PostService,
+    protected activatedRoute: ActivatedRoute,
+    protected dataUtils: DataUtils,
+    protected router: Router,
+    protected modalService: NgbModal
+  ) {}
 
-  loadAll(): void {
+  loadPage(page?: number, dontNavigate?: boolean): void {
     this.isLoading = true;
+    const pageToLoad: number = page ?? this.page ?? 1;
 
-    this.postService.query().subscribe(
-      (res: HttpResponse<IPost[]>) => {
-        this.isLoading = false;
-        this.posts = res.body ?? [];
-      },
-      () => {
-        this.isLoading = false;
-      }
-    );
+    this.postService
+      .query({
+        page: pageToLoad - 1,
+        size: this.itemsPerPage,
+        sort: this.sort(),
+      })
+      .subscribe(
+        (res: HttpResponse<IPost[]>) => {
+          this.isLoading = false;
+          this.onSuccess(res.body, res.headers, pageToLoad, !dontNavigate);
+        },
+        () => {
+          this.isLoading = false;
+          this.onError();
+        }
+      );
   }
 
   ngOnInit(): void {
-    this.loadAll();
+    this.handleNavigation();
   }
 
   trackId(index: number, item: IPost): number {
@@ -53,8 +77,51 @@ export class PostComponent implements OnInit {
     // unsubscribe not needed because closed completes on modal close
     modalRef.closed.subscribe(reason => {
       if (reason === 'deleted') {
-        this.loadAll();
+        this.loadPage();
       }
     });
+  }
+
+  protected sort(): string[] {
+    const result = [this.predicate + ',' + (this.ascending ? ASC : DESC)];
+    if (this.predicate !== 'id') {
+      result.push('id');
+    }
+    return result;
+  }
+
+  protected handleNavigation(): void {
+    combineLatest([this.activatedRoute.data, this.activatedRoute.queryParamMap]).subscribe(([data, params]) => {
+      const page = params.get('page');
+      const pageNumber = +(page ?? 1);
+      const sort = (params.get(SORT) ?? data['defaultSort']).split(',');
+      const predicate = sort[0];
+      const ascending = sort[1] === ASC;
+      if (pageNumber !== this.page || predicate !== this.predicate || ascending !== this.ascending) {
+        this.predicate = predicate;
+        this.ascending = ascending;
+        this.loadPage(pageNumber, true);
+      }
+    });
+  }
+
+  protected onSuccess(data: IPost[] | null, headers: HttpHeaders, page: number, navigate: boolean): void {
+    this.totalItems = Number(headers.get('X-Total-Count'));
+    this.page = page;
+    if (navigate) {
+      this.router.navigate(['/post'], {
+        queryParams: {
+          page: this.page,
+          size: this.itemsPerPage,
+          sort: this.predicate + ',' + (this.ascending ? ASC : DESC),
+        },
+      });
+    }
+    this.posts = data ?? [];
+    this.ngbPaginationPage = this.page;
+  }
+
+  protected onError(): void {
+    this.ngbPaginationPage = this.page ?? 1;
   }
 }

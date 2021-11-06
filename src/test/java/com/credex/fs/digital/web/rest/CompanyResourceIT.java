@@ -7,7 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.credex.fs.digital.IntegrationTest;
 import com.credex.fs.digital.domain.Company;
+import com.credex.fs.digital.domain.Reward;
 import com.credex.fs.digital.repository.CompanyRepository;
+import com.credex.fs.digital.service.criteria.CompanyCriteria;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
@@ -138,6 +140,166 @@ class CompanyResourceIT {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.id").value(company.getId().intValue()))
             .andExpect(jsonPath("$.name").value(DEFAULT_NAME));
+    }
+
+    @Test
+    @Transactional
+    void getCompaniesByIdFiltering() throws Exception {
+        // Initialize the database
+        companyRepository.saveAndFlush(company);
+
+        Long id = company.getId();
+
+        defaultCompanyShouldBeFound("id.equals=" + id);
+        defaultCompanyShouldNotBeFound("id.notEquals=" + id);
+
+        defaultCompanyShouldBeFound("id.greaterThanOrEqual=" + id);
+        defaultCompanyShouldNotBeFound("id.greaterThan=" + id);
+
+        defaultCompanyShouldBeFound("id.lessThanOrEqual=" + id);
+        defaultCompanyShouldNotBeFound("id.lessThan=" + id);
+    }
+
+    @Test
+    @Transactional
+    void getAllCompaniesByNameIsEqualToSomething() throws Exception {
+        // Initialize the database
+        companyRepository.saveAndFlush(company);
+
+        // Get all the companyList where name equals to DEFAULT_NAME
+        defaultCompanyShouldBeFound("name.equals=" + DEFAULT_NAME);
+
+        // Get all the companyList where name equals to UPDATED_NAME
+        defaultCompanyShouldNotBeFound("name.equals=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllCompaniesByNameIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        companyRepository.saveAndFlush(company);
+
+        // Get all the companyList where name not equals to DEFAULT_NAME
+        defaultCompanyShouldNotBeFound("name.notEquals=" + DEFAULT_NAME);
+
+        // Get all the companyList where name not equals to UPDATED_NAME
+        defaultCompanyShouldBeFound("name.notEquals=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllCompaniesByNameIsInShouldWork() throws Exception {
+        // Initialize the database
+        companyRepository.saveAndFlush(company);
+
+        // Get all the companyList where name in DEFAULT_NAME or UPDATED_NAME
+        defaultCompanyShouldBeFound("name.in=" + DEFAULT_NAME + "," + UPDATED_NAME);
+
+        // Get all the companyList where name equals to UPDATED_NAME
+        defaultCompanyShouldNotBeFound("name.in=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllCompaniesByNameIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        companyRepository.saveAndFlush(company);
+
+        // Get all the companyList where name is not null
+        defaultCompanyShouldBeFound("name.specified=true");
+
+        // Get all the companyList where name is null
+        defaultCompanyShouldNotBeFound("name.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllCompaniesByNameContainsSomething() throws Exception {
+        // Initialize the database
+        companyRepository.saveAndFlush(company);
+
+        // Get all the companyList where name contains DEFAULT_NAME
+        defaultCompanyShouldBeFound("name.contains=" + DEFAULT_NAME);
+
+        // Get all the companyList where name contains UPDATED_NAME
+        defaultCompanyShouldNotBeFound("name.contains=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllCompaniesByNameNotContainsSomething() throws Exception {
+        // Initialize the database
+        companyRepository.saveAndFlush(company);
+
+        // Get all the companyList where name does not contain DEFAULT_NAME
+        defaultCompanyShouldNotBeFound("name.doesNotContain=" + DEFAULT_NAME);
+
+        // Get all the companyList where name does not contain UPDATED_NAME
+        defaultCompanyShouldBeFound("name.doesNotContain=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllCompaniesByRewardsIsEqualToSomething() throws Exception {
+        // Initialize the database
+        companyRepository.saveAndFlush(company);
+        Reward rewards;
+        if (TestUtil.findAll(em, Reward.class).isEmpty()) {
+            rewards = RewardResourceIT.createEntity(em);
+            em.persist(rewards);
+            em.flush();
+        } else {
+            rewards = TestUtil.findAll(em, Reward.class).get(0);
+        }
+        em.persist(rewards);
+        em.flush();
+        company.addRewards(rewards);
+        companyRepository.saveAndFlush(company);
+        Long rewardsId = rewards.getId();
+
+        // Get all the companyList where rewards equals to rewardsId
+        defaultCompanyShouldBeFound("rewardsId.equals=" + rewardsId);
+
+        // Get all the companyList where rewards equals to (rewardsId + 1)
+        defaultCompanyShouldNotBeFound("rewardsId.equals=" + (rewardsId + 1));
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is returned.
+     */
+    private void defaultCompanyShouldBeFound(String filter) throws Exception {
+        restCompanyMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$.[*].id").value(hasItem(company.getId().intValue())))
+            .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)));
+
+        // Check, that the count call also returns 1
+        restCompanyMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("1"));
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is not returned.
+     */
+    private void defaultCompanyShouldNotBeFound(String filter) throws Exception {
+        restCompanyMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$").isEmpty());
+
+        // Check, that the count call also returns 0
+        restCompanyMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("0"));
     }
 
     @Test

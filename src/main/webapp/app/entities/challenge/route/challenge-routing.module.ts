@@ -11,6 +11,9 @@ const challengeRoute: Routes = [
   {
     path: '',
     component: ChallengeComponent,
+    data: {
+      defaultSort: 'id,asc',
+    },
     canActivate: [UserRouteAccessService],
   },
   {

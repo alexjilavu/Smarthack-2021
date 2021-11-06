@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.credex.fs.digital.IntegrationTest;
 import com.credex.fs.digital.domain.Icon;
 import com.credex.fs.digital.repository.IconRepository;
+import com.credex.fs.digital.service.criteria.IconCriteria;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
@@ -144,6 +145,219 @@ class IconResourceIT {
             .andExpect(jsonPath("$.id").value(icon.getId().intValue()))
             .andExpect(jsonPath("$.name").value(DEFAULT_NAME))
             .andExpect(jsonPath("$.url").value(DEFAULT_URL));
+    }
+
+    @Test
+    @Transactional
+    void getIconsByIdFiltering() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        Long id = icon.getId();
+
+        defaultIconShouldBeFound("id.equals=" + id);
+        defaultIconShouldNotBeFound("id.notEquals=" + id);
+
+        defaultIconShouldBeFound("id.greaterThanOrEqual=" + id);
+        defaultIconShouldNotBeFound("id.greaterThan=" + id);
+
+        defaultIconShouldBeFound("id.lessThanOrEqual=" + id);
+        defaultIconShouldNotBeFound("id.lessThan=" + id);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByNameIsEqualToSomething() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where name equals to DEFAULT_NAME
+        defaultIconShouldBeFound("name.equals=" + DEFAULT_NAME);
+
+        // Get all the iconList where name equals to UPDATED_NAME
+        defaultIconShouldNotBeFound("name.equals=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByNameIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where name not equals to DEFAULT_NAME
+        defaultIconShouldNotBeFound("name.notEquals=" + DEFAULT_NAME);
+
+        // Get all the iconList where name not equals to UPDATED_NAME
+        defaultIconShouldBeFound("name.notEquals=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByNameIsInShouldWork() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where name in DEFAULT_NAME or UPDATED_NAME
+        defaultIconShouldBeFound("name.in=" + DEFAULT_NAME + "," + UPDATED_NAME);
+
+        // Get all the iconList where name equals to UPDATED_NAME
+        defaultIconShouldNotBeFound("name.in=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByNameIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where name is not null
+        defaultIconShouldBeFound("name.specified=true");
+
+        // Get all the iconList where name is null
+        defaultIconShouldNotBeFound("name.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByNameContainsSomething() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where name contains DEFAULT_NAME
+        defaultIconShouldBeFound("name.contains=" + DEFAULT_NAME);
+
+        // Get all the iconList where name contains UPDATED_NAME
+        defaultIconShouldNotBeFound("name.contains=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByNameNotContainsSomething() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where name does not contain DEFAULT_NAME
+        defaultIconShouldNotBeFound("name.doesNotContain=" + DEFAULT_NAME);
+
+        // Get all the iconList where name does not contain UPDATED_NAME
+        defaultIconShouldBeFound("name.doesNotContain=" + UPDATED_NAME);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByUrlIsEqualToSomething() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where url equals to DEFAULT_URL
+        defaultIconShouldBeFound("url.equals=" + DEFAULT_URL);
+
+        // Get all the iconList where url equals to UPDATED_URL
+        defaultIconShouldNotBeFound("url.equals=" + UPDATED_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByUrlIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where url not equals to DEFAULT_URL
+        defaultIconShouldNotBeFound("url.notEquals=" + DEFAULT_URL);
+
+        // Get all the iconList where url not equals to UPDATED_URL
+        defaultIconShouldBeFound("url.notEquals=" + UPDATED_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByUrlIsInShouldWork() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where url in DEFAULT_URL or UPDATED_URL
+        defaultIconShouldBeFound("url.in=" + DEFAULT_URL + "," + UPDATED_URL);
+
+        // Get all the iconList where url equals to UPDATED_URL
+        defaultIconShouldNotBeFound("url.in=" + UPDATED_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByUrlIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where url is not null
+        defaultIconShouldBeFound("url.specified=true");
+
+        // Get all the iconList where url is null
+        defaultIconShouldNotBeFound("url.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByUrlContainsSomething() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where url contains DEFAULT_URL
+        defaultIconShouldBeFound("url.contains=" + DEFAULT_URL);
+
+        // Get all the iconList where url contains UPDATED_URL
+        defaultIconShouldNotBeFound("url.contains=" + UPDATED_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllIconsByUrlNotContainsSomething() throws Exception {
+        // Initialize the database
+        iconRepository.saveAndFlush(icon);
+
+        // Get all the iconList where url does not contain DEFAULT_URL
+        defaultIconShouldNotBeFound("url.doesNotContain=" + DEFAULT_URL);
+
+        // Get all the iconList where url does not contain UPDATED_URL
+        defaultIconShouldBeFound("url.doesNotContain=" + UPDATED_URL);
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is returned.
+     */
+    private void defaultIconShouldBeFound(String filter) throws Exception {
+        restIconMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$.[*].id").value(hasItem(icon.getId().intValue())))
+            .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
+            .andExpect(jsonPath("$.[*].url").value(hasItem(DEFAULT_URL)));
+
+        // Check, that the count call also returns 1
+        restIconMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("1"));
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is not returned.
+     */
+    private void defaultIconShouldNotBeFound(String filter) throws Exception {
+        restIconMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$").isEmpty());
+
+        // Check, that the count call also returns 0
+        restIconMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("0"));
     }
 
     @Test

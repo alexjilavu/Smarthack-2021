@@ -3,7 +3,7 @@
     <span jhiTranslate="smarthackApp.appUser.home.title">App Users</span>
 
     <div class="d-flex justify-content-end">
-      <button class="btn btn-info mr-2" (click)="loadAll()" [disabled]="isLoading">
+      <button class="btn btn-info mr-2" (click)="loadPage()" [disabled]="isLoading">
         <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
         <span jhiTranslate="smarthackApp.appUser.home.refreshListLabel">Refresh List</span>
       </button>
@@ -31,12 +31,17 @@
   <div class="table-responsive" id="entities" *ngIf="appUsers && appUsers.length > 0">
     <table class="table table-striped" aria-describedby="page-heading">
       <thead>
-        <tr>
-          <th scope="col"><span jhiTranslate="global.field.id">ID</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.appUser.walletAddress">Wallet Address</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.appUser.walletPassword">Wallet Password</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.appUser.appUser">App User</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.appUser.completedChallenges">Completed Challenges</span></th>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="loadPage()">
+          <th scope="col" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="walletAddress">
+            <span jhiTranslate="smarthackApp.appUser.walletAddress">Wallet Address</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="walletPassword">
+            <span jhiTranslate="smarthackApp.appUser.walletPassword">Wallet Password</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="appUser.id">
+            <span jhiTranslate="smarthackApp.appUser.appUser">App User</span> <fa-icon icon="sort"></fa-icon>
+          </th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -49,12 +54,6 @@
           <td>{{ appUser.walletPassword }}</td>
           <td>
             {{ appUser.appUser?.id }}
-          </td>
-          <td>
-            <span *ngFor="let completedChallenges of appUser.completedChallenges; let last = last">
-              <a class="form-control-static" [routerLink]="['/challenge', completedChallenges.id, 'view']">{{ completedChallenges.id }}</a
-              >{{ last ? '' : ', ' }}
-            </span>
           </td>
           <td class="text-right">
             <div class="btn-group">
@@ -87,5 +86,23 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div *ngIf="appUsers && appUsers.length > 0">
+    <div class="row justify-content-center">
+      <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+    </div>
+
+    <div class="row justify-content-center">
+      <ngb-pagination
+        [collectionSize]="totalItems"
+        [(page)]="ngbPaginationPage"
+        [pageSize]="itemsPerPage"
+        [maxSize]="5"
+        [rotate]="true"
+        [boundaryLinks]="true"
+        (pageChange)="loadPage($event)"
+      ></ngb-pagination>
+    </div>
   </div>
 </div>

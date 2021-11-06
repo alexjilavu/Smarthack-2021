@@ -2,6 +2,9 @@ package com.credex.fs.digital.web.rest;
 
 import com.credex.fs.digital.domain.Icon;
 import com.credex.fs.digital.repository.IconRepository;
+import com.credex.fs.digital.service.IconQueryService;
+import com.credex.fs.digital.service.IconService;
+import com.credex.fs.digital.service.criteria.IconCriteria;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,10 +14,15 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -22,7 +30,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("/api")
-@Transactional
 public class IconResource {
 
     private final Logger log = LoggerFactory.getLogger(IconResource.class);
@@ -32,10 +39,16 @@ public class IconResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final IconService iconService;
+
     private final IconRepository iconRepository;
 
-    public IconResource(IconRepository iconRepository) {
+    private final IconQueryService iconQueryService;
+
+    public IconResource(IconService iconService, IconRepository iconRepository, IconQueryService iconQueryService) {
+        this.iconService = iconService;
         this.iconRepository = iconRepository;
+        this.iconQueryService = iconQueryService;
     }
 
     /**
@@ -51,7 +64,7 @@ public class IconResource {
         if (icon.getId() != null) {
             throw new BadRequestAlertException("A new icon cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Icon result = iconRepository.save(icon);
+        Icon result = iconService.save(icon);
         return ResponseEntity
             .created(new URI("/api/icons/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
@@ -83,7 +96,7 @@ public class IconResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Icon result = iconRepository.save(icon);
+        Icon result = iconService.save(icon);
         return ResponseEntity
             .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, icon.getId().toString()))
@@ -116,19 +129,7 @@ public class IconResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Optional<Icon> result = iconRepository
-            .findById(icon.getId())
-            .map(existingIcon -> {
-                if (icon.getName() != null) {
-                    existingIcon.setName(icon.getName());
-                }
-                if (icon.getUrl() != null) {
-                    existingIcon.setUrl(icon.getUrl());
-                }
-
-                return existingIcon;
-            })
-            .map(iconRepository::save);
+        Optional<Icon> result = iconService.partialUpdate(icon);
 
         return ResponseUtil.wrapOrNotFound(
             result,
@@ -139,12 +140,28 @@ public class IconResource {
     /**
      * {@code GET  /icons} : get all the icons.
      *
+     * @param pageable the pagination information.
+     * @param criteria the criteria which the requested entities should match.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of icons in body.
      */
     @GetMapping("/icons")
-    public List<Icon> getAllIcons() {
-        log.debug("REST request to get all Icons");
-        return iconRepository.findAll();
+    public ResponseEntity<List<Icon>> getAllIcons(IconCriteria criteria, Pageable pageable) {
+        log.debug("REST request to get Icons by criteria: {}", criteria);
+        Page<Icon> page = iconQueryService.findByCriteria(criteria, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    /**
+     * {@code GET  /icons/count} : count all the icons.
+     *
+     * @param criteria the criteria which the requested entities should match.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the count in body.
+     */
+    @GetMapping("/icons/count")
+    public ResponseEntity<Long> countIcons(IconCriteria criteria) {
+        log.debug("REST request to count Icons by criteria: {}", criteria);
+        return ResponseEntity.ok().body(iconQueryService.countByCriteria(criteria));
     }
 
     /**
@@ -156,7 +173,7 @@ public class IconResource {
     @GetMapping("/icons/{id}")
     public ResponseEntity<Icon> getIcon(@PathVariable Long id) {
         log.debug("REST request to get Icon : {}", id);
-        Optional<Icon> icon = iconRepository.findById(id);
+        Optional<Icon> icon = iconService.findOne(id);
         return ResponseUtil.wrapOrNotFound(icon);
     }
 
@@ -169,7 +186,7 @@ public class IconResource {
     @DeleteMapping("/icons/{id}")
     public ResponseEntity<Void> deleteIcon(@PathVariable Long id) {
         log.debug("REST request to delete Icon : {}", id);
-        iconRepository.deleteById(id);
+        iconService.delete(id);
         return ResponseEntity
             .noContent()
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))

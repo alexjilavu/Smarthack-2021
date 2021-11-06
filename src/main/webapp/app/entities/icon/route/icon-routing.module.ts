@@ -11,6 +11,9 @@ const iconRoute: Routes = [
   {
     path: '',
     component: IconComponent,
+    data: {
+      defaultSort: 'id,asc',
+    },
     canActivate: [UserRouteAccessService],
   },
   {

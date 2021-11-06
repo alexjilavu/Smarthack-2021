@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
  * Spring Data SQL repository for the AppUser entity.
  */
 @Repository
-public interface AppUserRepository extends JpaRepository<AppUser, Long> {
+public interface AppUserRepository extends JpaRepository<AppUser, Long>, JpaSpecificationExecutor<AppUser> {
     @Query(
         value = "select distinct appUser from AppUser appUser left join fetch appUser.completedChallenges",
         countQuery = "select count(distinct appUser) from AppUser appUser"

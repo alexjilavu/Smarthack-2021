@@ -11,6 +11,9 @@ const companyRoute: Routes = [
   {
     path: '',
     component: CompanyComponent,
+    data: {
+      defaultSort: 'id,asc',
+    },
     canActivate: [UserRouteAccessService],
   },
   {

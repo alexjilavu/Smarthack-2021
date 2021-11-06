@@ -3,7 +3,7 @@
     <span jhiTranslate="smarthackApp.post.home.title">Posts</span>
 
     <div class="d-flex justify-content-end">
-      <button class="btn btn-info mr-2" (click)="loadAll()" [disabled]="isLoading">
+      <button class="btn btn-info mr-2" (click)="loadPage()" [disabled]="isLoading">
         <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
         <span jhiTranslate="smarthackApp.post.home.refreshListLabel">Refresh List</span>
       </button>
@@ -31,13 +31,23 @@
   <div class="table-responsive" id="entities" *ngIf="posts && posts.length > 0">
     <table class="table table-striped" aria-describedby="page-heading">
       <thead>
-        <tr>
-          <th scope="col"><span jhiTranslate="global.field.id">ID</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.post.content">Content</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.post.imageUrl">Image Url</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.post.publishedBy">Published By</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.post.noOfLikes">No Of Likes</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.post.noOfShares">No Of Shares</span></th>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="loadPage()">
+          <th scope="col" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="content">
+            <span jhiTranslate="smarthackApp.post.content">Content</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="imageUrl">
+            <span jhiTranslate="smarthackApp.post.imageUrl">Image Url</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="publishedBy">
+            <span jhiTranslate="smarthackApp.post.publishedBy">Published By</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="noOfLikes">
+            <span jhiTranslate="smarthackApp.post.noOfLikes">No Of Likes</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="noOfShares">
+            <span jhiTranslate="smarthackApp.post.noOfShares">No Of Shares</span> <fa-icon icon="sort"></fa-icon>
+          </th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -75,5 +85,23 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div *ngIf="posts && posts.length > 0">
+    <div class="row justify-content-center">
+      <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+    </div>
+
+    <div class="row justify-content-center">
+      <ngb-pagination
+        [collectionSize]="totalItems"
+        [(page)]="ngbPaginationPage"
+        [pageSize]="itemsPerPage"
+        [maxSize]="5"
+        [rotate]="true"
+        [boundaryLinks]="true"
+        (pageChange)="loadPage($event)"
+      ></ngb-pagination>
+    </div>
   </div>
 </div>

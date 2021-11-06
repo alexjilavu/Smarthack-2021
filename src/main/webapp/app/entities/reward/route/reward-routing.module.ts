@@ -11,6 +11,9 @@ const rewardRoute: Routes = [
   {
     path: '',
     component: RewardComponent,
+    data: {
+      defaultSort: 'id,asc',
+    },
     canActivate: [UserRouteAccessService],
   },
   {

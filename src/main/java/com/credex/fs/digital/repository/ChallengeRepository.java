@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
  * Spring Data SQL repository for the Challenge entity.
  */
 @Repository
-public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
+public interface ChallengeRepository extends JpaRepository<Challenge, Long>, JpaSpecificationExecutor<Challenge> {
     @Query(
         value = "select distinct challenge from Challenge challenge left join fetch challenge.hashTags",
         countQuery = "select count(distinct challenge) from Challenge challenge"

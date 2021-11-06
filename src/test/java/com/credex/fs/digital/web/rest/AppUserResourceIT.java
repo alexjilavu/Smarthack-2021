@@ -8,7 +8,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.credex.fs.digital.IntegrationTest;
 import com.credex.fs.digital.domain.AppUser;
+import com.credex.fs.digital.domain.Challenge;
+import com.credex.fs.digital.domain.User;
 import com.credex.fs.digital.repository.AppUserRepository;
+import com.credex.fs.digital.service.AppUserService;
+import com.credex.fs.digital.service.criteria.AppUserCriteria;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -54,6 +58,9 @@ class AppUserResourceIT {
 
     @Mock
     private AppUserRepository appUserRepositoryMock;
+
+    @Mock
+    private AppUserService appUserServiceMock;
 
     @Autowired
     private EntityManager em;
@@ -143,20 +150,20 @@ class AppUserResourceIT {
 
     @SuppressWarnings({ "unchecked" })
     void getAllAppUsersWithEagerRelationshipsIsEnabled() throws Exception {
-        when(appUserRepositoryMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
+        when(appUserServiceMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
 
         restAppUserMockMvc.perform(get(ENTITY_API_URL + "?eagerload=true")).andExpect(status().isOk());
 
-        verify(appUserRepositoryMock, times(1)).findAllWithEagerRelationships(any());
+        verify(appUserServiceMock, times(1)).findAllWithEagerRelationships(any());
     }
 
     @SuppressWarnings({ "unchecked" })
     void getAllAppUsersWithEagerRelationshipsIsNotEnabled() throws Exception {
-        when(appUserRepositoryMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
+        when(appUserServiceMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
 
         restAppUserMockMvc.perform(get(ENTITY_API_URL + "?eagerload=true")).andExpect(status().isOk());
 
-        verify(appUserRepositoryMock, times(1)).findAllWithEagerRelationships(any());
+        verify(appUserServiceMock, times(1)).findAllWithEagerRelationships(any());
     }
 
     @Test
@@ -173,6 +180,271 @@ class AppUserResourceIT {
             .andExpect(jsonPath("$.id").value(appUser.getId().intValue()))
             .andExpect(jsonPath("$.walletAddress").value(DEFAULT_WALLET_ADDRESS))
             .andExpect(jsonPath("$.walletPassword").value(DEFAULT_WALLET_PASSWORD));
+    }
+
+    @Test
+    @Transactional
+    void getAppUsersByIdFiltering() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        Long id = appUser.getId();
+
+        defaultAppUserShouldBeFound("id.equals=" + id);
+        defaultAppUserShouldNotBeFound("id.notEquals=" + id);
+
+        defaultAppUserShouldBeFound("id.greaterThanOrEqual=" + id);
+        defaultAppUserShouldNotBeFound("id.greaterThan=" + id);
+
+        defaultAppUserShouldBeFound("id.lessThanOrEqual=" + id);
+        defaultAppUserShouldNotBeFound("id.lessThan=" + id);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletAddressIsEqualToSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletAddress equals to DEFAULT_WALLET_ADDRESS
+        defaultAppUserShouldBeFound("walletAddress.equals=" + DEFAULT_WALLET_ADDRESS);
+
+        // Get all the appUserList where walletAddress equals to UPDATED_WALLET_ADDRESS
+        defaultAppUserShouldNotBeFound("walletAddress.equals=" + UPDATED_WALLET_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletAddressIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletAddress not equals to DEFAULT_WALLET_ADDRESS
+        defaultAppUserShouldNotBeFound("walletAddress.notEquals=" + DEFAULT_WALLET_ADDRESS);
+
+        // Get all the appUserList where walletAddress not equals to UPDATED_WALLET_ADDRESS
+        defaultAppUserShouldBeFound("walletAddress.notEquals=" + UPDATED_WALLET_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletAddressIsInShouldWork() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletAddress in DEFAULT_WALLET_ADDRESS or UPDATED_WALLET_ADDRESS
+        defaultAppUserShouldBeFound("walletAddress.in=" + DEFAULT_WALLET_ADDRESS + "," + UPDATED_WALLET_ADDRESS);
+
+        // Get all the appUserList where walletAddress equals to UPDATED_WALLET_ADDRESS
+        defaultAppUserShouldNotBeFound("walletAddress.in=" + UPDATED_WALLET_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletAddressIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletAddress is not null
+        defaultAppUserShouldBeFound("walletAddress.specified=true");
+
+        // Get all the appUserList where walletAddress is null
+        defaultAppUserShouldNotBeFound("walletAddress.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletAddressContainsSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletAddress contains DEFAULT_WALLET_ADDRESS
+        defaultAppUserShouldBeFound("walletAddress.contains=" + DEFAULT_WALLET_ADDRESS);
+
+        // Get all the appUserList where walletAddress contains UPDATED_WALLET_ADDRESS
+        defaultAppUserShouldNotBeFound("walletAddress.contains=" + UPDATED_WALLET_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletAddressNotContainsSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletAddress does not contain DEFAULT_WALLET_ADDRESS
+        defaultAppUserShouldNotBeFound("walletAddress.doesNotContain=" + DEFAULT_WALLET_ADDRESS);
+
+        // Get all the appUserList where walletAddress does not contain UPDATED_WALLET_ADDRESS
+        defaultAppUserShouldBeFound("walletAddress.doesNotContain=" + UPDATED_WALLET_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletPasswordIsEqualToSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletPassword equals to DEFAULT_WALLET_PASSWORD
+        defaultAppUserShouldBeFound("walletPassword.equals=" + DEFAULT_WALLET_PASSWORD);
+
+        // Get all the appUserList where walletPassword equals to UPDATED_WALLET_PASSWORD
+        defaultAppUserShouldNotBeFound("walletPassword.equals=" + UPDATED_WALLET_PASSWORD);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletPasswordIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletPassword not equals to DEFAULT_WALLET_PASSWORD
+        defaultAppUserShouldNotBeFound("walletPassword.notEquals=" + DEFAULT_WALLET_PASSWORD);
+
+        // Get all the appUserList where walletPassword not equals to UPDATED_WALLET_PASSWORD
+        defaultAppUserShouldBeFound("walletPassword.notEquals=" + UPDATED_WALLET_PASSWORD);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletPasswordIsInShouldWork() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletPassword in DEFAULT_WALLET_PASSWORD or UPDATED_WALLET_PASSWORD
+        defaultAppUserShouldBeFound("walletPassword.in=" + DEFAULT_WALLET_PASSWORD + "," + UPDATED_WALLET_PASSWORD);
+
+        // Get all the appUserList where walletPassword equals to UPDATED_WALLET_PASSWORD
+        defaultAppUserShouldNotBeFound("walletPassword.in=" + UPDATED_WALLET_PASSWORD);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletPasswordIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletPassword is not null
+        defaultAppUserShouldBeFound("walletPassword.specified=true");
+
+        // Get all the appUserList where walletPassword is null
+        defaultAppUserShouldNotBeFound("walletPassword.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletPasswordContainsSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletPassword contains DEFAULT_WALLET_PASSWORD
+        defaultAppUserShouldBeFound("walletPassword.contains=" + DEFAULT_WALLET_PASSWORD);
+
+        // Get all the appUserList where walletPassword contains UPDATED_WALLET_PASSWORD
+        defaultAppUserShouldNotBeFound("walletPassword.contains=" + UPDATED_WALLET_PASSWORD);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByWalletPasswordNotContainsSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+
+        // Get all the appUserList where walletPassword does not contain DEFAULT_WALLET_PASSWORD
+        defaultAppUserShouldNotBeFound("walletPassword.doesNotContain=" + DEFAULT_WALLET_PASSWORD);
+
+        // Get all the appUserList where walletPassword does not contain UPDATED_WALLET_PASSWORD
+        defaultAppUserShouldBeFound("walletPassword.doesNotContain=" + UPDATED_WALLET_PASSWORD);
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByAppUserIsEqualToSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+        User appUser;
+        if (TestUtil.findAll(em, User.class).isEmpty()) {
+            appUser = UserResourceIT.createEntity(em);
+            em.persist(appUser);
+            em.flush();
+        } else {
+            appUser = TestUtil.findAll(em, User.class).get(0);
+        }
+        em.persist(appUser);
+        em.flush();
+        appUser.setAppUser(appUser);
+        appUserRepository.saveAndFlush(appUser);
+        Long appUserId = appUser.getId();
+
+        // Get all the appUserList where appUser equals to appUserId
+        defaultAppUserShouldBeFound("appUserId.equals=" + appUserId);
+
+        // Get all the appUserList where appUser equals to (appUserId + 1)
+        defaultAppUserShouldNotBeFound("appUserId.equals=" + (appUserId + 1));
+    }
+
+    @Test
+    @Transactional
+    void getAllAppUsersByCompletedChallengesIsEqualToSomething() throws Exception {
+        // Initialize the database
+        appUserRepository.saveAndFlush(appUser);
+        Challenge completedChallenges;
+        if (TestUtil.findAll(em, Challenge.class).isEmpty()) {
+            completedChallenges = ChallengeResourceIT.createEntity(em);
+            em.persist(completedChallenges);
+            em.flush();
+        } else {
+            completedChallenges = TestUtil.findAll(em, Challenge.class).get(0);
+        }
+        em.persist(completedChallenges);
+        em.flush();
+        appUser.addCompletedChallenges(completedChallenges);
+        appUserRepository.saveAndFlush(appUser);
+        Long completedChallengesId = completedChallenges.getId();
+
+        // Get all the appUserList where completedChallenges equals to completedChallengesId
+        defaultAppUserShouldBeFound("completedChallengesId.equals=" + completedChallengesId);
+
+        // Get all the appUserList where completedChallenges equals to (completedChallengesId + 1)
+        defaultAppUserShouldNotBeFound("completedChallengesId.equals=" + (completedChallengesId + 1));
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is returned.
+     */
+    private void defaultAppUserShouldBeFound(String filter) throws Exception {
+        restAppUserMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$.[*].id").value(hasItem(appUser.getId().intValue())))
+            .andExpect(jsonPath("$.[*].walletAddress").value(hasItem(DEFAULT_WALLET_ADDRESS)))
+            .andExpect(jsonPath("$.[*].walletPassword").value(hasItem(DEFAULT_WALLET_PASSWORD)));
+
+        // Check, that the count call also returns 1
+        restAppUserMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("1"));
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is not returned.
+     */
+    private void defaultAppUserShouldNotBeFound(String filter) throws Exception {
+        restAppUserMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$").isEmpty());
+
+        // Check, that the count call also returns 0
+        restAppUserMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("0"));
     }
 
     @Test

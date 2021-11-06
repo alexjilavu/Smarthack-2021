@@ -11,6 +11,9 @@ const hashTagRoute: Routes = [
   {
     path: '',
     component: HashTagComponent,
+    data: {
+      defaultSort: 'id,asc',
+    },
     canActivate: [UserRouteAccessService],
   },
   {

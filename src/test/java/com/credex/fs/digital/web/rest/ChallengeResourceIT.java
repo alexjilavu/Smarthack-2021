@@ -7,8 +7,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.credex.fs.digital.IntegrationTest;
+import com.credex.fs.digital.domain.AppUser;
 import com.credex.fs.digital.domain.Challenge;
+import com.credex.fs.digital.domain.HashTag;
+import com.credex.fs.digital.domain.Icon;
 import com.credex.fs.digital.repository.ChallengeRepository;
+import com.credex.fs.digital.service.ChallengeService;
+import com.credex.fs.digital.service.criteria.ChallengeCriteria;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -48,6 +53,7 @@ class ChallengeResourceIT {
 
     private static final Long DEFAULT_REWARD_AMOUNT = 1L;
     private static final Long UPDATED_REWARD_AMOUNT = 2L;
+    private static final Long SMALLER_REWARD_AMOUNT = 1L - 1L;
 
     private static final String ENTITY_API_URL = "/api/challenges";
     private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
@@ -60,6 +66,9 @@ class ChallengeResourceIT {
 
     @Mock
     private ChallengeRepository challengeRepositoryMock;
+
+    @Mock
+    private ChallengeService challengeServiceMock;
 
     @Autowired
     private EntityManager em;
@@ -161,20 +170,20 @@ class ChallengeResourceIT {
 
     @SuppressWarnings({ "unchecked" })
     void getAllChallengesWithEagerRelationshipsIsEnabled() throws Exception {
-        when(challengeRepositoryMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
+        when(challengeServiceMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
 
         restChallengeMockMvc.perform(get(ENTITY_API_URL + "?eagerload=true")).andExpect(status().isOk());
 
-        verify(challengeRepositoryMock, times(1)).findAllWithEagerRelationships(any());
+        verify(challengeServiceMock, times(1)).findAllWithEagerRelationships(any());
     }
 
     @SuppressWarnings({ "unchecked" })
     void getAllChallengesWithEagerRelationshipsIsNotEnabled() throws Exception {
-        when(challengeRepositoryMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
+        when(challengeServiceMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
 
         restChallengeMockMvc.perform(get(ENTITY_API_URL + "?eagerload=true")).andExpect(status().isOk());
 
-        verify(challengeRepositoryMock, times(1)).findAllWithEagerRelationships(any());
+        verify(challengeServiceMock, times(1)).findAllWithEagerRelationships(any());
     }
 
     @Test
@@ -193,6 +202,481 @@ class ChallengeResourceIT {
             .andExpect(jsonPath("$.message").value(DEFAULT_MESSAGE))
             .andExpect(jsonPath("$.iconUrl").value(DEFAULT_ICON_URL))
             .andExpect(jsonPath("$.rewardAmount").value(DEFAULT_REWARD_AMOUNT.intValue()));
+    }
+
+    @Test
+    @Transactional
+    void getChallengesByIdFiltering() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        Long id = challenge.getId();
+
+        defaultChallengeShouldBeFound("id.equals=" + id);
+        defaultChallengeShouldNotBeFound("id.notEquals=" + id);
+
+        defaultChallengeShouldBeFound("id.greaterThanOrEqual=" + id);
+        defaultChallengeShouldNotBeFound("id.greaterThan=" + id);
+
+        defaultChallengeShouldBeFound("id.lessThanOrEqual=" + id);
+        defaultChallengeShouldNotBeFound("id.lessThan=" + id);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByTitleIsEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where title equals to DEFAULT_TITLE
+        defaultChallengeShouldBeFound("title.equals=" + DEFAULT_TITLE);
+
+        // Get all the challengeList where title equals to UPDATED_TITLE
+        defaultChallengeShouldNotBeFound("title.equals=" + UPDATED_TITLE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByTitleIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where title not equals to DEFAULT_TITLE
+        defaultChallengeShouldNotBeFound("title.notEquals=" + DEFAULT_TITLE);
+
+        // Get all the challengeList where title not equals to UPDATED_TITLE
+        defaultChallengeShouldBeFound("title.notEquals=" + UPDATED_TITLE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByTitleIsInShouldWork() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where title in DEFAULT_TITLE or UPDATED_TITLE
+        defaultChallengeShouldBeFound("title.in=" + DEFAULT_TITLE + "," + UPDATED_TITLE);
+
+        // Get all the challengeList where title equals to UPDATED_TITLE
+        defaultChallengeShouldNotBeFound("title.in=" + UPDATED_TITLE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByTitleIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where title is not null
+        defaultChallengeShouldBeFound("title.specified=true");
+
+        // Get all the challengeList where title is null
+        defaultChallengeShouldNotBeFound("title.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByTitleContainsSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where title contains DEFAULT_TITLE
+        defaultChallengeShouldBeFound("title.contains=" + DEFAULT_TITLE);
+
+        // Get all the challengeList where title contains UPDATED_TITLE
+        defaultChallengeShouldNotBeFound("title.contains=" + UPDATED_TITLE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByTitleNotContainsSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where title does not contain DEFAULT_TITLE
+        defaultChallengeShouldNotBeFound("title.doesNotContain=" + DEFAULT_TITLE);
+
+        // Get all the challengeList where title does not contain UPDATED_TITLE
+        defaultChallengeShouldBeFound("title.doesNotContain=" + UPDATED_TITLE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByMessageIsEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where message equals to DEFAULT_MESSAGE
+        defaultChallengeShouldBeFound("message.equals=" + DEFAULT_MESSAGE);
+
+        // Get all the challengeList where message equals to UPDATED_MESSAGE
+        defaultChallengeShouldNotBeFound("message.equals=" + UPDATED_MESSAGE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByMessageIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where message not equals to DEFAULT_MESSAGE
+        defaultChallengeShouldNotBeFound("message.notEquals=" + DEFAULT_MESSAGE);
+
+        // Get all the challengeList where message not equals to UPDATED_MESSAGE
+        defaultChallengeShouldBeFound("message.notEquals=" + UPDATED_MESSAGE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByMessageIsInShouldWork() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where message in DEFAULT_MESSAGE or UPDATED_MESSAGE
+        defaultChallengeShouldBeFound("message.in=" + DEFAULT_MESSAGE + "," + UPDATED_MESSAGE);
+
+        // Get all the challengeList where message equals to UPDATED_MESSAGE
+        defaultChallengeShouldNotBeFound("message.in=" + UPDATED_MESSAGE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByMessageIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where message is not null
+        defaultChallengeShouldBeFound("message.specified=true");
+
+        // Get all the challengeList where message is null
+        defaultChallengeShouldNotBeFound("message.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByMessageContainsSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where message contains DEFAULT_MESSAGE
+        defaultChallengeShouldBeFound("message.contains=" + DEFAULT_MESSAGE);
+
+        // Get all the challengeList where message contains UPDATED_MESSAGE
+        defaultChallengeShouldNotBeFound("message.contains=" + UPDATED_MESSAGE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByMessageNotContainsSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where message does not contain DEFAULT_MESSAGE
+        defaultChallengeShouldNotBeFound("message.doesNotContain=" + DEFAULT_MESSAGE);
+
+        // Get all the challengeList where message does not contain UPDATED_MESSAGE
+        defaultChallengeShouldBeFound("message.doesNotContain=" + UPDATED_MESSAGE);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByIconUrlIsEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where iconUrl equals to DEFAULT_ICON_URL
+        defaultChallengeShouldBeFound("iconUrl.equals=" + DEFAULT_ICON_URL);
+
+        // Get all the challengeList where iconUrl equals to UPDATED_ICON_URL
+        defaultChallengeShouldNotBeFound("iconUrl.equals=" + UPDATED_ICON_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByIconUrlIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where iconUrl not equals to DEFAULT_ICON_URL
+        defaultChallengeShouldNotBeFound("iconUrl.notEquals=" + DEFAULT_ICON_URL);
+
+        // Get all the challengeList where iconUrl not equals to UPDATED_ICON_URL
+        defaultChallengeShouldBeFound("iconUrl.notEquals=" + UPDATED_ICON_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByIconUrlIsInShouldWork() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where iconUrl in DEFAULT_ICON_URL or UPDATED_ICON_URL
+        defaultChallengeShouldBeFound("iconUrl.in=" + DEFAULT_ICON_URL + "," + UPDATED_ICON_URL);
+
+        // Get all the challengeList where iconUrl equals to UPDATED_ICON_URL
+        defaultChallengeShouldNotBeFound("iconUrl.in=" + UPDATED_ICON_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByIconUrlIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where iconUrl is not null
+        defaultChallengeShouldBeFound("iconUrl.specified=true");
+
+        // Get all the challengeList where iconUrl is null
+        defaultChallengeShouldNotBeFound("iconUrl.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByIconUrlContainsSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where iconUrl contains DEFAULT_ICON_URL
+        defaultChallengeShouldBeFound("iconUrl.contains=" + DEFAULT_ICON_URL);
+
+        // Get all the challengeList where iconUrl contains UPDATED_ICON_URL
+        defaultChallengeShouldNotBeFound("iconUrl.contains=" + UPDATED_ICON_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByIconUrlNotContainsSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where iconUrl does not contain DEFAULT_ICON_URL
+        defaultChallengeShouldNotBeFound("iconUrl.doesNotContain=" + DEFAULT_ICON_URL);
+
+        // Get all the challengeList where iconUrl does not contain UPDATED_ICON_URL
+        defaultChallengeShouldBeFound("iconUrl.doesNotContain=" + UPDATED_ICON_URL);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByRewardAmountIsEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where rewardAmount equals to DEFAULT_REWARD_AMOUNT
+        defaultChallengeShouldBeFound("rewardAmount.equals=" + DEFAULT_REWARD_AMOUNT);
+
+        // Get all the challengeList where rewardAmount equals to UPDATED_REWARD_AMOUNT
+        defaultChallengeShouldNotBeFound("rewardAmount.equals=" + UPDATED_REWARD_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByRewardAmountIsNotEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where rewardAmount not equals to DEFAULT_REWARD_AMOUNT
+        defaultChallengeShouldNotBeFound("rewardAmount.notEquals=" + DEFAULT_REWARD_AMOUNT);
+
+        // Get all the challengeList where rewardAmount not equals to UPDATED_REWARD_AMOUNT
+        defaultChallengeShouldBeFound("rewardAmount.notEquals=" + UPDATED_REWARD_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByRewardAmountIsInShouldWork() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where rewardAmount in DEFAULT_REWARD_AMOUNT or UPDATED_REWARD_AMOUNT
+        defaultChallengeShouldBeFound("rewardAmount.in=" + DEFAULT_REWARD_AMOUNT + "," + UPDATED_REWARD_AMOUNT);
+
+        // Get all the challengeList where rewardAmount equals to UPDATED_REWARD_AMOUNT
+        defaultChallengeShouldNotBeFound("rewardAmount.in=" + UPDATED_REWARD_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByRewardAmountIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where rewardAmount is not null
+        defaultChallengeShouldBeFound("rewardAmount.specified=true");
+
+        // Get all the challengeList where rewardAmount is null
+        defaultChallengeShouldNotBeFound("rewardAmount.specified=false");
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByRewardAmountIsGreaterThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where rewardAmount is greater than or equal to DEFAULT_REWARD_AMOUNT
+        defaultChallengeShouldBeFound("rewardAmount.greaterThanOrEqual=" + DEFAULT_REWARD_AMOUNT);
+
+        // Get all the challengeList where rewardAmount is greater than or equal to UPDATED_REWARD_AMOUNT
+        defaultChallengeShouldNotBeFound("rewardAmount.greaterThanOrEqual=" + UPDATED_REWARD_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByRewardAmountIsLessThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where rewardAmount is less than or equal to DEFAULT_REWARD_AMOUNT
+        defaultChallengeShouldBeFound("rewardAmount.lessThanOrEqual=" + DEFAULT_REWARD_AMOUNT);
+
+        // Get all the challengeList where rewardAmount is less than or equal to SMALLER_REWARD_AMOUNT
+        defaultChallengeShouldNotBeFound("rewardAmount.lessThanOrEqual=" + SMALLER_REWARD_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByRewardAmountIsLessThanSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where rewardAmount is less than DEFAULT_REWARD_AMOUNT
+        defaultChallengeShouldNotBeFound("rewardAmount.lessThan=" + DEFAULT_REWARD_AMOUNT);
+
+        // Get all the challengeList where rewardAmount is less than UPDATED_REWARD_AMOUNT
+        defaultChallengeShouldBeFound("rewardAmount.lessThan=" + UPDATED_REWARD_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByRewardAmountIsGreaterThanSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+
+        // Get all the challengeList where rewardAmount is greater than DEFAULT_REWARD_AMOUNT
+        defaultChallengeShouldNotBeFound("rewardAmount.greaterThan=" + DEFAULT_REWARD_AMOUNT);
+
+        // Get all the challengeList where rewardAmount is greater than SMALLER_REWARD_AMOUNT
+        defaultChallengeShouldBeFound("rewardAmount.greaterThan=" + SMALLER_REWARD_AMOUNT);
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByIconIsEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+        Icon icon;
+        if (TestUtil.findAll(em, Icon.class).isEmpty()) {
+            icon = IconResourceIT.createEntity(em);
+            em.persist(icon);
+            em.flush();
+        } else {
+            icon = TestUtil.findAll(em, Icon.class).get(0);
+        }
+        em.persist(icon);
+        em.flush();
+        challenge.setIcon(icon);
+        challengeRepository.saveAndFlush(challenge);
+        Long iconId = icon.getId();
+
+        // Get all the challengeList where icon equals to iconId
+        defaultChallengeShouldBeFound("iconId.equals=" + iconId);
+
+        // Get all the challengeList where icon equals to (iconId + 1)
+        defaultChallengeShouldNotBeFound("iconId.equals=" + (iconId + 1));
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByHashTagsIsEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+        HashTag hashTags;
+        if (TestUtil.findAll(em, HashTag.class).isEmpty()) {
+            hashTags = HashTagResourceIT.createEntity(em);
+            em.persist(hashTags);
+            em.flush();
+        } else {
+            hashTags = TestUtil.findAll(em, HashTag.class).get(0);
+        }
+        em.persist(hashTags);
+        em.flush();
+        challenge.addHashTags(hashTags);
+        challengeRepository.saveAndFlush(challenge);
+        Long hashTagsId = hashTags.getId();
+
+        // Get all the challengeList where hashTags equals to hashTagsId
+        defaultChallengeShouldBeFound("hashTagsId.equals=" + hashTagsId);
+
+        // Get all the challengeList where hashTags equals to (hashTagsId + 1)
+        defaultChallengeShouldNotBeFound("hashTagsId.equals=" + (hashTagsId + 1));
+    }
+
+    @Test
+    @Transactional
+    void getAllChallengesByUsersThatCompletedIsEqualToSomething() throws Exception {
+        // Initialize the database
+        challengeRepository.saveAndFlush(challenge);
+        AppUser usersThatCompleted;
+        if (TestUtil.findAll(em, AppUser.class).isEmpty()) {
+            usersThatCompleted = AppUserResourceIT.createEntity(em);
+            em.persist(usersThatCompleted);
+            em.flush();
+        } else {
+            usersThatCompleted = TestUtil.findAll(em, AppUser.class).get(0);
+        }
+        em.persist(usersThatCompleted);
+        em.flush();
+        challenge.addUsersThatCompleted(usersThatCompleted);
+        challengeRepository.saveAndFlush(challenge);
+        Long usersThatCompletedId = usersThatCompleted.getId();
+
+        // Get all the challengeList where usersThatCompleted equals to usersThatCompletedId
+        defaultChallengeShouldBeFound("usersThatCompletedId.equals=" + usersThatCompletedId);
+
+        // Get all the challengeList where usersThatCompleted equals to (usersThatCompletedId + 1)
+        defaultChallengeShouldNotBeFound("usersThatCompletedId.equals=" + (usersThatCompletedId + 1));
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is returned.
+     */
+    private void defaultChallengeShouldBeFound(String filter) throws Exception {
+        restChallengeMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$.[*].id").value(hasItem(challenge.getId().intValue())))
+            .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE)))
+            .andExpect(jsonPath("$.[*].message").value(hasItem(DEFAULT_MESSAGE)))
+            .andExpect(jsonPath("$.[*].iconUrl").value(hasItem(DEFAULT_ICON_URL)))
+            .andExpect(jsonPath("$.[*].rewardAmount").value(hasItem(DEFAULT_REWARD_AMOUNT.intValue())));
+
+        // Check, that the count call also returns 1
+        restChallengeMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("1"));
+    }
+
+    /**
+     * Executes the search, and checks that the default entity is not returned.
+     */
+    private void defaultChallengeShouldNotBeFound(String filter) throws Exception {
+        restChallengeMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$").isEmpty());
+
+        // Check, that the count call also returns 0
+        restChallengeMockMvc
+            .perform(get(ENTITY_API_URL + "/count?sort=id,desc&" + filter))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(content().string("0"));
     }
 
     @Test

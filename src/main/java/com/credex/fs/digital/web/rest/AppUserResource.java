@@ -2,6 +2,9 @@ package com.credex.fs.digital.web.rest;
 
 import com.credex.fs.digital.domain.AppUser;
 import com.credex.fs.digital.repository.AppUserRepository;
+import com.credex.fs.digital.service.AppUserQueryService;
+import com.credex.fs.digital.service.AppUserService;
+import com.credex.fs.digital.service.criteria.AppUserCriteria;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,10 +14,15 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -22,7 +30,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("/api")
-@Transactional
 public class AppUserResource {
 
     private final Logger log = LoggerFactory.getLogger(AppUserResource.class);
@@ -32,10 +39,16 @@ public class AppUserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final AppUserService appUserService;
+
     private final AppUserRepository appUserRepository;
 
-    public AppUserResource(AppUserRepository appUserRepository) {
+    private final AppUserQueryService appUserQueryService;
+
+    public AppUserResource(AppUserService appUserService, AppUserRepository appUserRepository, AppUserQueryService appUserQueryService) {
+        this.appUserService = appUserService;
         this.appUserRepository = appUserRepository;
+        this.appUserQueryService = appUserQueryService;
     }
 
     /**
@@ -51,7 +64,7 @@ public class AppUserResource {
         if (appUser.getId() != null) {
             throw new BadRequestAlertException("A new appUser cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        AppUser result = appUserRepository.save(appUser);
+        AppUser result = appUserService.save(appUser);
         return ResponseEntity
             .created(new URI("/api/app-users/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
@@ -83,7 +96,7 @@ public class AppUserResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        AppUser result = appUserRepository.save(appUser);
+        AppUser result = appUserService.save(appUser);
         return ResponseEntity
             .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, appUser.getId().toString()))
@@ -118,19 +131,7 @@ public class AppUserResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Optional<AppUser> result = appUserRepository
-            .findById(appUser.getId())
-            .map(existingAppUser -> {
-                if (appUser.getWalletAddress() != null) {
-                    existingAppUser.setWalletAddress(appUser.getWalletAddress());
-                }
-                if (appUser.getWalletPassword() != null) {
-                    existingAppUser.setWalletPassword(appUser.getWalletPassword());
-                }
-
-                return existingAppUser;
-            })
-            .map(appUserRepository::save);
+        Optional<AppUser> result = appUserService.partialUpdate(appUser);
 
         return ResponseUtil.wrapOrNotFound(
             result,
@@ -141,13 +142,28 @@ public class AppUserResource {
     /**
      * {@code GET  /app-users} : get all the appUsers.
      *
-     * @param eagerload flag to eager load entities from relationships (This is applicable for many-to-many).
+     * @param pageable the pagination information.
+     * @param criteria the criteria which the requested entities should match.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of appUsers in body.
      */
     @GetMapping("/app-users")
-    public List<AppUser> getAllAppUsers(@RequestParam(required = false, defaultValue = "false") boolean eagerload) {
-        log.debug("REST request to get all AppUsers");
-        return appUserRepository.findAllWithEagerRelationships();
+    public ResponseEntity<List<AppUser>> getAllAppUsers(AppUserCriteria criteria, Pageable pageable) {
+        log.debug("REST request to get AppUsers by criteria: {}", criteria);
+        Page<AppUser> page = appUserQueryService.findByCriteria(criteria, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    /**
+     * {@code GET  /app-users/count} : count all the appUsers.
+     *
+     * @param criteria the criteria which the requested entities should match.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the count in body.
+     */
+    @GetMapping("/app-users/count")
+    public ResponseEntity<Long> countAppUsers(AppUserCriteria criteria) {
+        log.debug("REST request to count AppUsers by criteria: {}", criteria);
+        return ResponseEntity.ok().body(appUserQueryService.countByCriteria(criteria));
     }
 
     /**
@@ -159,7 +175,7 @@ public class AppUserResource {
     @GetMapping("/app-users/{id}")
     public ResponseEntity<AppUser> getAppUser(@PathVariable Long id) {
         log.debug("REST request to get AppUser : {}", id);
-        Optional<AppUser> appUser = appUserRepository.findOneWithEagerRelationships(id);
+        Optional<AppUser> appUser = appUserService.findOne(id);
         return ResponseUtil.wrapOrNotFound(appUser);
     }
 
@@ -172,7 +188,7 @@ public class AppUserResource {
     @DeleteMapping("/app-users/{id}")
     public ResponseEntity<Void> deleteAppUser(@PathVariable Long id) {
         log.debug("REST request to delete AppUser : {}", id);
-        appUserRepository.deleteById(id);
+        appUserService.delete(id);
         return ResponseEntity
             .noContent()
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))

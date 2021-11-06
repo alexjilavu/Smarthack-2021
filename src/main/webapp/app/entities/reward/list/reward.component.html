@@ -3,7 +3,7 @@
     <span jhiTranslate="smarthackApp.reward.home.title">Rewards</span>
 
     <div class="d-flex justify-content-end">
-      <button class="btn btn-info mr-2" (click)="loadAll()" [disabled]="isLoading">
+      <button class="btn btn-info mr-2" (click)="loadPage()" [disabled]="isLoading">
         <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
         <span jhiTranslate="smarthackApp.reward.home.refreshListLabel">Refresh List</span>
       </button>
@@ -31,12 +31,16 @@
   <div class="table-responsive" id="entities" *ngIf="rewards && rewards.length > 0">
     <table class="table table-striped" aria-describedby="page-heading">
       <thead>
-        <tr>
-          <th scope="col"><span jhiTranslate="global.field.id">ID</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.reward.value">Value</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.reward.content">Content</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.reward.icon">Icon</span></th>
-          <th scope="col"><span jhiTranslate="smarthackApp.reward.company">Company</span></th>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="loadPage()">
+          <th scope="col" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="value"><span jhiTranslate="smarthackApp.reward.value">Value</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="content">
+            <span jhiTranslate="smarthackApp.reward.content">Content</span> <fa-icon icon="sort"></fa-icon>
+          </th>
+          <th scope="col" jhiSortBy="icon.id"><span jhiTranslate="smarthackApp.reward.icon">Icon</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="company.id">
+            <span jhiTranslate="smarthackApp.reward.company">Company</span> <fa-icon icon="sort"></fa-icon>
+          </th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -78,5 +82,23 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div *ngIf="rewards && rewards.length > 0">
+    <div class="row justify-content-center">
+      <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+    </div>
+
+    <div class="row justify-content-center">
+      <ngb-pagination
+        [collectionSize]="totalItems"
+        [(page)]="ngbPaginationPage"
+        [pageSize]="itemsPerPage"
+        [maxSize]="5"
+        [rotate]="true"
+        [boundaryLinks]="true"
+        (pageChange)="loadPage($event)"
+      ></ngb-pagination>
+    </div>
   </div>
 </div>

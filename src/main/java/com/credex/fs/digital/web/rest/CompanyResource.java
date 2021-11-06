@@ -2,6 +2,9 @@ package com.credex.fs.digital.web.rest;
 
 import com.credex.fs.digital.domain.Company;
 import com.credex.fs.digital.repository.CompanyRepository;
+import com.credex.fs.digital.service.CompanyQueryService;
+import com.credex.fs.digital.service.CompanyService;
+import com.credex.fs.digital.service.criteria.CompanyCriteria;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,10 +14,15 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -22,7 +30,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("/api")
-@Transactional
 public class CompanyResource {
 
     private final Logger log = LoggerFactory.getLogger(CompanyResource.class);
@@ -32,10 +39,16 @@ public class CompanyResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final CompanyService companyService;
+
     private final CompanyRepository companyRepository;
 
-    public CompanyResource(CompanyRepository companyRepository) {
+    private final CompanyQueryService companyQueryService;
+
+    public CompanyResource(CompanyService companyService, CompanyRepository companyRepository, CompanyQueryService companyQueryService) {
+        this.companyService = companyService;
         this.companyRepository = companyRepository;
+        this.companyQueryService = companyQueryService;
     }
 
     /**
@@ -51,7 +64,7 @@ public class CompanyResource {
         if (company.getId() != null) {
             throw new BadRequestAlertException("A new company cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Company result = companyRepository.save(company);
+        Company result = companyService.save(company);
         return ResponseEntity
             .created(new URI("/api/companies/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
@@ -83,7 +96,7 @@ public class CompanyResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Company result = companyRepository.save(company);
+        Company result = companyService.save(company);
         return ResponseEntity
             .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, company.getId().toString()))
@@ -118,16 +131,7 @@ public class CompanyResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Optional<Company> result = companyRepository
-            .findById(company.getId())
-            .map(existingCompany -> {
-                if (company.getName() != null) {
-                    existingCompany.setName(company.getName());
-                }
-
-                return existingCompany;
-            })
-            .map(companyRepository::save);
+        Optional<Company> result = companyService.partialUpdate(company);
 
         return ResponseUtil.wrapOrNotFound(
             result,
@@ -138,12 +142,28 @@ public class CompanyResource {
     /**
      * {@code GET  /companies} : get all the companies.
      *
+     * @param pageable the pagination information.
+     * @param criteria the criteria which the requested entities should match.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of companies in body.
      */
     @GetMapping("/companies")
-    public List<Company> getAllCompanies() {
-        log.debug("REST request to get all Companies");
-        return companyRepository.findAll();
+    public ResponseEntity<List<Company>> getAllCompanies(CompanyCriteria criteria, Pageable pageable) {
+        log.debug("REST request to get Companies by criteria: {}", criteria);
+        Page<Company> page = companyQueryService.findByCriteria(criteria, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    /**
+     * {@code GET  /companies/count} : count all the companies.
+     *
+     * @param criteria the criteria which the requested entities should match.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the count in body.
+     */
+    @GetMapping("/companies/count")
+    public ResponseEntity<Long> countCompanies(CompanyCriteria criteria) {
+        log.debug("REST request to count Companies by criteria: {}", criteria);
+        return ResponseEntity.ok().body(companyQueryService.countByCriteria(criteria));
     }
 
     /**
@@ -155,7 +175,7 @@ public class CompanyResource {
     @GetMapping("/companies/{id}")
     public ResponseEntity<Company> getCompany(@PathVariable Long id) {
         log.debug("REST request to get Company : {}", id);
-        Optional<Company> company = companyRepository.findById(id);
+        Optional<Company> company = companyService.findOne(id);
         return ResponseUtil.wrapOrNotFound(company);
     }
 
@@ -168,7 +188,7 @@ public class CompanyResource {
     @DeleteMapping("/companies/{id}")
     public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
         log.debug("REST request to delete Company : {}", id);
-        companyRepository.deleteById(id);
+        companyService.delete(id);
         return ResponseEntity
             .noContent()
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))

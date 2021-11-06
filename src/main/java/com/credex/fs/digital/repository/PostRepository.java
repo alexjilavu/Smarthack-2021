@@ -9,4 +9,4 @@ import org.springframework.stereotype.Repository;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface PostRepository extends JpaRepository<Post, Long> {}
+public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {}

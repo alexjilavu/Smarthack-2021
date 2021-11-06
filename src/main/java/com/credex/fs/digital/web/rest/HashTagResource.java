@@ -2,6 +2,9 @@ package com.credex.fs.digital.web.rest;
 
 import com.credex.fs.digital.domain.HashTag;
 import com.credex.fs.digital.repository.HashTagRepository;
+import com.credex.fs.digital.service.HashTagQueryService;
+import com.credex.fs.digital.service.HashTagService;
+import com.credex.fs.digital.service.criteria.HashTagCriteria;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,10 +14,15 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -22,7 +30,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("/api")
-@Transactional
 public class HashTagResource {
 
     private final Logger log = LoggerFactory.getLogger(HashTagResource.class);
@@ -32,10 +39,16 @@ public class HashTagResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final HashTagService hashTagService;
+
     private final HashTagRepository hashTagRepository;
 
-    public HashTagResource(HashTagRepository hashTagRepository) {
+    private final HashTagQueryService hashTagQueryService;
+
+    public HashTagResource(HashTagService hashTagService, HashTagRepository hashTagRepository, HashTagQueryService hashTagQueryService) {
+        this.hashTagService = hashTagService;
         this.hashTagRepository = hashTagRepository;
+        this.hashTagQueryService = hashTagQueryService;
     }
 
     /**
@@ -51,7 +64,7 @@ public class HashTagResource {
         if (hashTag.getId() != null) {
             throw new BadRequestAlertException("A new hashTag cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        HashTag result = hashTagRepository.save(hashTag);
+        HashTag result = hashTagService.save(hashTag);
         return ResponseEntity
             .created(new URI("/api/hash-tags/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
@@ -83,7 +96,7 @@ public class HashTagResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        HashTag result = hashTagRepository.save(hashTag);
+        HashTag result = hashTagService.save(hashTag);
         return ResponseEntity
             .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, hashTag.getId().toString()))
@@ -118,19 +131,7 @@ public class HashTagResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Optional<HashTag> result = hashTagRepository
-            .findById(hashTag.getId())
-            .map(existingHashTag -> {
-                if (hashTag.getName() != null) {
-                    existingHashTag.setName(hashTag.getName());
-                }
-                if (hashTag.getCompany() != null) {
-                    existingHashTag.setCompany(hashTag.getCompany());
-                }
-
-                return existingHashTag;
-            })
-            .map(hashTagRepository::save);
+        Optional<HashTag> result = hashTagService.partialUpdate(hashTag);
 
         return ResponseUtil.wrapOrNotFound(
             result,
@@ -141,12 +142,28 @@ public class HashTagResource {
     /**
      * {@code GET  /hash-tags} : get all the hashTags.
      *
+     * @param pageable the pagination information.
+     * @param criteria the criteria which the requested entities should match.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of hashTags in body.
      */
     @GetMapping("/hash-tags")
-    public List<HashTag> getAllHashTags() {
-        log.debug("REST request to get all HashTags");
-        return hashTagRepository.findAll();
+    public ResponseEntity<List<HashTag>> getAllHashTags(HashTagCriteria criteria, Pageable pageable) {
+        log.debug("REST request to get HashTags by criteria: {}", criteria);
+        Page<HashTag> page = hashTagQueryService.findByCriteria(criteria, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    /**
+     * {@code GET  /hash-tags/count} : count all the hashTags.
+     *
+     * @param criteria the criteria which the requested entities should match.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the count in body.
+     */
+    @GetMapping("/hash-tags/count")
+    public ResponseEntity<Long> countHashTags(HashTagCriteria criteria) {
+        log.debug("REST request to count HashTags by criteria: {}", criteria);
+        return ResponseEntity.ok().body(hashTagQueryService.countByCriteria(criteria));
     }
 
     /**
@@ -158,7 +175,7 @@ public class HashTagResource {
     @GetMapping("/hash-tags/{id}")
     public ResponseEntity<HashTag> getHashTag(@PathVariable Long id) {
         log.debug("REST request to get HashTag : {}", id);
-        Optional<HashTag> hashTag = hashTagRepository.findById(id);
+        Optional<HashTag> hashTag = hashTagService.findOne(id);
         return ResponseUtil.wrapOrNotFound(hashTag);
     }
 
@@ -171,7 +188,7 @@ public class HashTagResource {
     @DeleteMapping("/hash-tags/{id}")
     public ResponseEntity<Void> deleteHashTag(@PathVariable Long id) {
         log.debug("REST request to delete HashTag : {}", id);
-        hashTagRepository.deleteById(id);
+        hashTagService.delete(id);
         return ResponseEntity
             .noContent()
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))

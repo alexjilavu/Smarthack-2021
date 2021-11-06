@@ -11,6 +11,9 @@ const postRoute: Routes = [
   {
     path: '',
     component: PostComponent,
+    data: {
+      defaultSort: 'id,asc',
+    },
     canActivate: [UserRouteAccessService],
   },
   {
