@@ -4,7 +4,11 @@ import com.credex.fs.digital.domain.Challenge;
 import com.credex.fs.digital.repository.ChallengeRepository;
 import com.credex.fs.digital.service.ChallengeQueryService;
 import com.credex.fs.digital.service.ChallengeService;
+import com.credex.fs.digital.service.ComputerVisionService;
 import com.credex.fs.digital.service.criteria.ChallengeCriteria;
+import com.credex.fs.digital.service.dto.ChallengeDTO;
+import com.credex.fs.digital.service.dto.CompleteChallengeDTO;
+import com.credex.fs.digital.service.dto.CompleteChallengeRequestDTO;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -13,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +50,9 @@ public class ChallengeResource {
 
     private final ChallengeQueryService challengeQueryService;
 
+    @Autowired
+    private ComputerVisionService computerVisionService;
+
     public ChallengeResource(
         ChallengeService challengeService,
         ChallengeRepository challengeRepository,
@@ -53,6 +61,11 @@ public class ChallengeResource {
         this.challengeService = challengeService;
         this.challengeRepository = challengeRepository;
         this.challengeQueryService = challengeQueryService;
+    }
+
+    @PostMapping("/completeChallenge")
+    public CompleteChallengeDTO completeChallenge(@RequestBody CompleteChallengeRequestDTO completeChallengeRequestDTO) {
+        return challengeService.completeChallenge(completeChallengeRequestDTO);
     }
 
     /**
@@ -148,16 +161,14 @@ public class ChallengeResource {
     /**
      * {@code GET  /challenges} : get all the challenges.
      *
-     * @param pageable the pagination information.
      * @param criteria the criteria which the requested entities should match.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of challenges in body.
      */
     @GetMapping("/challenges")
-    public ResponseEntity<List<Challenge>> getAllChallenges(ChallengeCriteria criteria, Pageable pageable) {
+    public List<ChallengeDTO> getAllChallenges(ChallengeCriteria criteria) {
         log.debug("REST request to get Challenges by criteria: {}", criteria);
-        Page<Challenge> page = challengeQueryService.findByCriteria(criteria, pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return ResponseEntity.ok().headers(headers).body(page.getContent());
+
+        return challengeService.getAllChallenges(criteria);
     }
 
     /**
@@ -199,5 +210,10 @@ public class ChallengeResource {
             .noContent()
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
             .build();
+    }
+
+    @GetMapping("/testImage")
+    public void testImage() {
+        computerVisionService.analyzeImage();
     }
 }

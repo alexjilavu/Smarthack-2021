@@ -1,10 +1,13 @@
 package com.credex.fs.digital.service;
 
 import com.credex.fs.digital.domain.Reward;
+import com.credex.fs.digital.repository.AppUserRepository;
 import com.credex.fs.digital.repository.RewardRepository;
+import com.credex.fs.digital.security.CustomerSecurityUtils;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,15 @@ public class RewardService {
     private final Logger log = LoggerFactory.getLogger(RewardService.class);
 
     private final RewardRepository rewardRepository;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private CustomerSecurityUtils customerSecurityUtils;
+
+    @Autowired
+    private ChallengeQueryService challengeQueryService;
 
     public RewardService(RewardRepository rewardRepository) {
         this.rewardRepository = rewardRepository;
@@ -93,4 +105,6 @@ public class RewardService {
         log.debug("Request to delete Reward : {}", id);
         rewardRepository.deleteById(id);
     }
+
+    public void redeemReward(Long rewardId) {}
 }

@@ -94,7 +94,7 @@ public class AppUserQueryService extends QueryService<AppUser> {
             if (criteria.getAppUserId() != null) {
                 specification =
                     specification.and(
-                        buildSpecification(criteria.getAppUserId(), root -> root.join(AppUser_.appUser, JoinType.LEFT).get(User_.id))
+                        buildSpecification(criteria.getAppUserId(), root -> root.join(AppUser_.user, JoinType.LEFT).get(User_.id))
                     );
             }
             if (criteria.getCompletedChallengesId() != null) {

@@ -194,4 +194,9 @@ public class RewardResource {
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
             .build();
     }
+
+    @PostMapping("/redeemReward")
+    public void redeemReward(@RequestParam Long rewardId) {
+        rewardService.redeemReward(rewardId);
+    }
 }

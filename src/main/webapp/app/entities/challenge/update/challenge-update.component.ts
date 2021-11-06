@@ -28,6 +28,7 @@ export class ChallengeUpdateComponent implements OnInit {
     message: [],
     iconUrl: [],
     rewardAmount: [],
+    requiredTags: [],
     icon: [],
     hashTags: [],
   });
@@ -107,6 +108,7 @@ export class ChallengeUpdateComponent implements OnInit {
       message: challenge.message,
       iconUrl: challenge.iconUrl,
       rewardAmount: challenge.rewardAmount,
+      requiredTags: challenge.requiredTags,
       icon: challenge.icon,
       hashTags: challenge.hashTags,
     });
@@ -144,6 +146,7 @@ export class ChallengeUpdateComponent implements OnInit {
       message: this.editForm.get(['message'])!.value,
       iconUrl: this.editForm.get(['iconUrl'])!.value,
       rewardAmount: this.editForm.get(['rewardAmount'])!.value,
+      requiredTags: this.editForm.get(['requiredTags'])!.value,
       icon: this.editForm.get(['icon'])!.value,
       hashTags: this.editForm.get(['hashTags'])!.value,
     };

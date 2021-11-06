@@ -16,7 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Integrations tests for {@link DomainUserDetailsService}.
+ * Integrations tests for {@link MyUserDetailsService}.
  */
 @Transactional
 @IntegrationTest

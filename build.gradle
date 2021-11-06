@@ -203,6 +203,12 @@ dependencies {
         implementation platform("tech.jhipster:jhipster-dependencies:${jhipsterDependenciesVersion}")
     }
 
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.22'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+
     // Use ", version: jhipsterDependenciesVersion, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
     implementation group: "tech.jhipster", name: "jhipster-framework"
@@ -266,6 +272,9 @@ dependencies {
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunitJunit5Version}"
     testImplementation "com.h2database:h2"
     developmentOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
+
+    implementation "com.microsoft.azure.cognitiveservices:azure-cognitiveservices-computervision:1.0.6-beta"
+    implementation ('org.web3j:core:4.8.7')
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 

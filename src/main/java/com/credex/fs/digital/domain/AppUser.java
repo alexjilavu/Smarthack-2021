@@ -29,12 +29,12 @@ public class AppUser implements Serializable {
 
     @OneToOne
     @JoinColumn(unique = true)
-    private User appUser;
+    private User user;
 
     @ManyToMany
     @JoinTable(
         name = "rel_app_user__completed_challenges",
-        joinColumns = @JoinColumn(name = "app_user_id"),
+        joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "completed_challenges_id")
     )
     @JsonIgnoreProperties(value = { "icon", "hashTags", "usersThatCompleteds" }, allowSetters = true)
@@ -81,16 +81,16 @@ public class AppUser implements Serializable {
         this.walletPassword = walletPassword;
     }
 
-    public User getAppUser() {
-        return this.appUser;
+    public User getUser() {
+        return this.user;
     }
 
-    public void setAppUser(User user) {
-        this.appUser = user;
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public AppUser appUser(User user) {
-        this.setAppUser(user);
+    public AppUser user(User user) {
+        this.setUser(user);
         return this;
     }
 

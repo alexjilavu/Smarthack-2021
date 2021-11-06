@@ -36,7 +36,7 @@
     "clientThemeVariant": "",
     "applicationType": "monolith",
     "applicationIndex": 0,
-    "entities": ["AppUser", "Challenge", "HashTag", "Post", "Company", "Reward", "Icon", "Transaction"],
+    "entities": ["AppUser", "Challenge", "HashTag", "Post", "Company", "Reward", "Icon", "Transaction", "ErcWallet"],
     "skipCheckLengthOfIdentifier": false,
     "skipFakeData": false,
     "blueprints": [],
@@ -46,6 +46,6 @@
     "creationTimestamp": 1636210950337,
     "jwtSecretKey": "NjM0ZGNlZDFmYThlZTNhZWYxYzU4MjA1ZGVmZDYzMDNmMGViYWU2NGQzZWZlZGEzYjg0OGNlZGUwN2M2NDA0MTRjY2QyNzVmNDY4MzNmNjc4YzhhMGJiNjgyYmU2MzZmODc4ODYzM2MzODI4NzMxZTQxODFmYjU2ZGIzMGI3MjQ=",
     "devServerPort": 4200,
-    "lastLiquibaseTimestamp": 1636211430000
+    "lastLiquibaseTimestamp": 1636214647000
   }
 }

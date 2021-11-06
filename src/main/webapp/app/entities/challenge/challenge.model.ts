@@ -8,6 +8,7 @@ export interface IChallenge {
   message?: string | null;
   iconUrl?: string | null;
   rewardAmount?: number | null;
+  requiredTags?: string | null;
   icon?: IIcon | null;
   hashTags?: IHashTag[] | null;
   usersThatCompleteds?: IAppUser[] | null;
@@ -20,6 +21,7 @@ export class Challenge implements IChallenge {
     public message?: string | null,
     public iconUrl?: string | null,
     public rewardAmount?: number | null,
+    public requiredTags?: string | null,
     public icon?: IIcon | null,
     public hashTags?: IHashTag[] | null,
     public usersThatCompleteds?: IAppUser[] | null

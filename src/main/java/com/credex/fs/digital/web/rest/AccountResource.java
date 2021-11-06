@@ -3,10 +3,13 @@ package com.credex.fs.digital.web.rest;
 import com.credex.fs.digital.domain.User;
 import com.credex.fs.digital.repository.UserRepository;
 import com.credex.fs.digital.security.SecurityUtils;
+import com.credex.fs.digital.security.jwt.JWTFilter;
+import com.credex.fs.digital.security.jwt.TokenProvider;
 import com.credex.fs.digital.service.MailService;
 import com.credex.fs.digital.service.UserService;
 import com.credex.fs.digital.service.dto.AdminUserDTO;
 import com.credex.fs.digital.service.dto.PasswordChangeDTO;
+import com.credex.fs.digital.service.dto.RegisterUserDTO;
 import com.credex.fs.digital.web.rest.errors.*;
 import com.credex.fs.digital.web.rest.vm.KeyAndPasswordVM;
 import com.credex.fs.digital.web.rest.vm.ManagedUserVM;
@@ -16,7 +19,14 @@ import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -41,6 +51,12 @@ public class AccountResource {
 
     private final MailService mailService;
 
+    @Autowired
+    private AuthenticationManagerBuilder authenticationManagerBuilder;
+
+    @Autowired
+    private TokenProvider tokenProvider;
+
     public AccountResource(UserRepository userRepository, UserService userService, MailService mailService) {
         this.userRepository = userRepository;
         this.userService = userService;
@@ -57,12 +73,24 @@ public class AccountResource {
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        if (isPasswordLengthInvalid(managedUserVM.getPassword())) {
+    public ResponseEntity<UserJWTController.JWTToken> registerAccount(@Valid @RequestBody RegisterUserDTO registerUserDTO) {
+        if (isPasswordLengthInvalid(registerUserDTO.getPassword())) {
             throw new InvalidPasswordException();
         }
-        User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
+        User user = userService.registerUser(registerUserDTO, registerUserDTO.getPassword());
         mailService.sendActivationEmail(user);
+
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+            registerUserDTO.getLogin(),
+            registerUserDTO.getPassword()
+        );
+
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = tokenProvider.createToken(authentication, false, user.getId());
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
+        return new ResponseEntity<>(new UserJWTController.JWTToken(jwt), httpHeaders, HttpStatus.OK);
     }
 
     /**

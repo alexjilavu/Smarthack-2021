@@ -1,18 +1,23 @@
 package com.credex.fs.digital.service;
 
 import com.credex.fs.digital.config.Constants;
+import com.credex.fs.digital.domain.AppUser;
 import com.credex.fs.digital.domain.Authority;
 import com.credex.fs.digital.domain.User;
+import com.credex.fs.digital.repository.AppUserRepository;
 import com.credex.fs.digital.repository.AuthorityRepository;
 import com.credex.fs.digital.repository.UserRepository;
 import com.credex.fs.digital.security.AuthoritiesConstants;
 import com.credex.fs.digital.security.SecurityUtils;
 import com.credex.fs.digital.service.dto.AdminUserDTO;
+import com.credex.fs.digital.service.dto.RegisterUserDTO;
 import com.credex.fs.digital.service.dto.UserDTO;
+import com.credex.fs.digital.util.WalletUtils;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -38,10 +43,18 @@ public class UserService {
 
     private final AuthorityRepository authorityRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository) {
+    private final AppUserRepository appUserRepository;
+
+    public UserService(
+        UserRepository userRepository,
+        PasswordEncoder passwordEncoder,
+        AuthorityRepository authorityRepository,
+        AppUserRepository appUserRepository
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
+        this.appUserRepository = appUserRepository;
     }
 
     public Optional<User> activateRegistration(String key) {
@@ -81,6 +94,40 @@ public class UserService {
             });
     }
 
+    public User registerUser(RegisterUserDTO userDTO, String password) {
+        userRepository
+            .findOneByLogin(userDTO.getLogin().toLowerCase())
+            .ifPresent(existingUser -> {
+                boolean removed = removeNonActivatedUser(existingUser);
+                if (!removed) {
+                    throw new UsernameAlreadyUsedException();
+                }
+            });
+        User newUser = new User();
+        String encryptedPassword = passwordEncoder.encode(password);
+        newUser.setLogin(userDTO.getLogin().toLowerCase());
+        // new user gets initially a generated password
+        newUser.setPassword(encryptedPassword);
+        newUser.setFirstName(userDTO.getFirstName());
+        // new user is not active
+        newUser.setActivated(true);
+        // new user gets registration key
+        newUser.setActivationKey(RandomUtil.generateActivationKey());
+        Set<Authority> authorities = new HashSet<>();
+        authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
+        newUser.setAuthorities(authorities);
+
+        Pair<String, String> wallet = WalletUtils.asignWallet();
+        AppUser appUser = new AppUser().walletAddress(wallet.getLeft()).walletPassword(wallet.getRight());
+
+        newUser = userRepository.save(newUser);
+
+        appUser = appUserRepository.save(new AppUser().walletAddress(wallet.getLeft()).walletPassword(wallet.getRight()).user(newUser));
+
+        log.debug("Created Information for User: {}", newUser);
+        return newUser;
+    }
+
     public User registerUser(AdminUserDTO userDTO, String password) {
         userRepository
             .findOneByLogin(userDTO.getLogin().toLowerCase())
@@ -111,13 +158,20 @@ public class UserService {
         newUser.setImageUrl(userDTO.getImageUrl());
         newUser.setLangKey(userDTO.getLangKey());
         // new user is not active
-        newUser.setActivated(false);
+        newUser.setActivated(true);
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
-        userRepository.save(newUser);
+
+        Pair<String, String> wallet = WalletUtils.asignWallet();
+        AppUser appUser = new AppUser().walletAddress(wallet.getLeft()).walletPassword(wallet.getRight());
+
+        newUser = userRepository.save(newUser);
+
+        appUser = appUserRepository.save(new AppUser().walletAddress(wallet.getLeft()).walletPassword(wallet.getRight()).user(newUser));
+
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }

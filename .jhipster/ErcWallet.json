@@ -1,0 +1,24 @@
+{
+  "name": "ErcWallet",
+  "fields": [
+    {
+      "fieldName": "address",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "private",
+      "fieldType": "String"
+    }
+  ],
+  "relationships": [],
+  "entityTableName": "erc_wallet",
+  "dto": "no",
+  "pagination": "pagination",
+  "service": "serviceClass",
+  "jpaMetamodelFiltering": true,
+  "fluentMethods": true,
+  "readOnly": false,
+  "embedded": false,
+  "applications": ["smarthack"],
+  "changelogDate": "20211106160407"
+}

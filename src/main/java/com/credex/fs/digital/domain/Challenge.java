@@ -33,6 +33,9 @@ public class Challenge implements Serializable {
     @Column(name = "reward_amount")
     private Long rewardAmount;
 
+    @Column(name = "required_tags")
+    private String requiredTags;
+
     @ManyToOne
     private Icon icon;
 
@@ -50,6 +53,14 @@ public class Challenge implements Serializable {
     private Set<AppUser> usersThatCompleteds = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
+    public String getRequiredTags() {
+        return requiredTags;
+    }
+
+    public void setRequiredTags(String requiredTags) {
+        this.requiredTags = requiredTags;
+    }
 
     public Long getId() {
         return this.id;

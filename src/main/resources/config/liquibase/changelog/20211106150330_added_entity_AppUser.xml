@@ -20,8 +20,8 @@
             <column name="wallet_password" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            <column name="app_user_id" type="bigint">
-                <constraints nullable="true" unique="true" uniqueConstraintName="ux_app_user__app_user_id" />
+            <column name="user_id" type="bigint">
+                <constraints nullable="true" unique="true" uniqueConstraintName="ux_app_user__user_id" />
             </column>
             <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
         </createTable>
@@ -33,12 +33,12 @@
             <column name="completed_challenges_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="app_user_id" type="bigint">
+            <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>
 
-        <addPrimaryKey columnNames="app_user_id, completed_challenges_id" tableName="rel_app_user__completed_challenges"/>
+        <addPrimaryKey columnNames="user_id, completed_challenges_id" tableName="rel_app_user__completed_challenges"/>
     </changeSet>
 
     <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here -->

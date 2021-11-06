@@ -1,4 +1,8 @@
 
+entity ErcWallet {
+    address String
+    private String
+}
 
 entity AppUser {
 	walletAddress String
@@ -109,32 +113,6 @@ relationship ManyToOne {
     Challenge{icon} to Icon
 }
 
-relationship OneToMany {
-	Company{rewards} to Reward{company}
-}
-
-relationship ManyToMany {
-	Challenge{hashTags} to HashTag{challenges}
-    AppUser{completedChallenges} to Challenge{usersThatCompleted}
-}
-
-// Set an angular suffix
-// angularSuffix * with mySuffix
-application {
-	config {
-    	baseName smarthack
-        authenticationType jwt
-        buildTool gradle
-        devDatabaseType postgresql
-        prodDatabaseType postgresql
-        languages [en]
-        packageName com.credex.fs.digital
-        serverPort 8080
-        cacheProvider no
-    }
-    
-    entities *
-}
 relationship OneToMany {
 	Company{rewards} to Reward{company}
 }

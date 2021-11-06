@@ -15,6 +15,7 @@
         "reward": "Reward",
         "icon": "Icon",
         "transaction": "Transaction",
+        "ercWallet": "Erc Wallet",
         "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
       },
       "account": {

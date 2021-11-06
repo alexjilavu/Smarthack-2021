@@ -1,14 +1,29 @@
 package com.credex.fs.digital.service;
 
+import com.credex.fs.digital.domain.AppUser;
 import com.credex.fs.digital.domain.Challenge;
+import com.credex.fs.digital.domain.User;
+import com.credex.fs.digital.repository.AppUserRepository;
 import com.credex.fs.digital.repository.ChallengeRepository;
+import com.credex.fs.digital.security.CustomerSecurityUtils;
+import com.credex.fs.digital.service.criteria.ChallengeCriteria;
+import com.credex.fs.digital.service.dto.ChallengeDTO;
+import com.credex.fs.digital.service.dto.CompleteChallengeDTO;
+import com.credex.fs.digital.service.dto.CompleteChallengeRequestDTO;
+import com.microsoft.azure.cognitiveservices.vision.computervision.models.ImageTag;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 
 /**
  * Service Implementation for managing {@link Challenge}.
@@ -21,8 +36,20 @@ public class ChallengeService {
 
     private final ChallengeRepository challengeRepository;
 
-    public ChallengeService(ChallengeRepository challengeRepository) {
+    private final ComputerVisionService computerVisionService;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private CustomerSecurityUtils customerSecurityUtils;
+
+    @Autowired
+    private ChallengeQueryService challengeQueryService;
+
+    public ChallengeService(ChallengeRepository challengeRepository, ComputerVisionService computerVisionService) {
         this.challengeRepository = challengeRepository;
+        this.computerVisionService = computerVisionService;
     }
 
     /**
@@ -107,5 +134,56 @@ public class ChallengeService {
     public void delete(Long id) {
         log.debug("Request to delete Challenge : {}", id);
         challengeRepository.deleteById(id);
+    }
+
+    @Transactional
+    public CompleteChallengeDTO completeChallenge(CompleteChallengeRequestDTO completeChallengeRequestDTO) {
+        Challenge challenge = challengeRepository
+            .findById(completeChallengeRequestDTO.getChallengeId())
+            .orElseThrow(EntityNotFoundException::new);
+        User user = customerSecurityUtils.getUser().orElseThrow(EntityNotFoundException::new);
+
+        log.info("User {} trying to complete challenge {}", user.getLogin(), challenge.getTitle());
+
+        List<String> challengeTags = new ArrayList<>(List.of(challenge.getRequiredTags().split(",")));
+        List<ImageTag> tags = computerVisionService.analyzeImage(completeChallengeRequestDTO.getB64Image());
+
+        for (ImageTag tag : tags) {
+            if (challengeTags.contains(tag.name().toLowerCase())) {
+                if (tag.confidence() < 0.90d) {
+                    break;
+                }
+
+                challengeTags.remove(tag.name());
+            }
+        }
+
+        if (challengeTags.isEmpty()) {
+            AppUser appUser = appUserRepository.findAppUserByUserId(user.getId()).orElseThrow(EntityNotFoundException::new);
+            appUser.addCompletedChallenges(challenge);
+
+            return new CompleteChallengeDTO(true);
+        }
+
+        return new CompleteChallengeDTO(false);
+    }
+
+    @Transactional
+    public List<ChallengeDTO> getAllChallenges(ChallengeCriteria criteria) {
+        User user = customerSecurityUtils.getUser().orElseThrow(EntityNotFoundException::new);
+        AppUser appUser = appUserRepository.findAppUserByUserId(user.getId()).orElseThrow(EntityNotFoundException::new);
+
+        return challengeQueryService
+            .findByCriteria(criteria)
+            .stream()
+            .map(challenge -> {
+                boolean completed = false;
+                if (appUser.getCompletedChallenges().contains(challenge)) {
+                    completed = true;
+                }
+
+                return new ChallengeDTO(challenge, completed);
+            })
+            .collect(Collectors.toList());
     }
 }
