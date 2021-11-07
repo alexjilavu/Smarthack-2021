@@ -8,6 +8,7 @@ import com.credex.fs.digital.repository.RewardRepository;
 import com.credex.fs.digital.security.CustomerSecurityUtils;
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import javax.persistence.EntityNotFoundException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -123,7 +124,12 @@ public class RewardService {
         Reward reward = rewardRepository.findById(rewardId).orElseThrow(EntityNotFoundException::new);
         log.info("Request to redeem {} by {}", reward.getContent(), appUser.getUser().getFirstName());
 
-        blockchainService.burn(appUser.getWalletAddress(), BigInteger.valueOf(reward.getValue()));
+        try {
+            blockchainService.burn(appUser.getWalletPassword(), reward.getValue());
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
         String identifier = String.format("{}_{}_{}", user.getLogin(), appUser.getId(), reward.getId());
 
         reward.addUsersThatCompleteds(appUser);

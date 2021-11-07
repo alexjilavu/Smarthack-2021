@@ -14,6 +14,7 @@ import com.microsoft.azure.cognitiveservices.vision.computervision.models.ImageT
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -46,6 +47,9 @@ public class ChallengeService {
 
     @Autowired
     private ChallengeQueryService challengeQueryService;
+
+    @Autowired
+    private BlockchainService blockchainService;
 
     public ChallengeService(ChallengeRepository challengeRepository, ComputerVisionService computerVisionService) {
         this.challengeRepository = challengeRepository;
@@ -164,6 +168,12 @@ public class ChallengeService {
         if (challengeTags.isEmpty()) {
             AppUser appUser = appUserRepository.findAppUserByUserId(user.getId()).orElseThrow(EntityNotFoundException::new);
             appUser.addCompletedChallenges(challenge);
+
+            try {
+                blockchainService.addTokens(appUser.getWalletAddress(), challenge.getRewardAmount());
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
+            }
 
             return new CompleteChallengeDTO(true);
         }

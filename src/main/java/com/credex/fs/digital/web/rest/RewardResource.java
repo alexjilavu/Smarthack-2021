@@ -10,6 +10,7 @@ import com.credex.fs.digital.service.RewardQueryService;
 import com.credex.fs.digital.service.RewardService;
 import com.credex.fs.digital.service.criteria.RewardCriteria;
 import com.credex.fs.digital.service.dto.ChallengeDTO;
+import com.credex.fs.digital.service.dto.RedeemRewardDTO;
 import com.credex.fs.digital.service.dto.RewardDTO;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
 import java.net.URI;
@@ -19,6 +20,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
@@ -162,6 +168,7 @@ public class RewardResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of rewards in body.
      */
     @GetMapping("/rewards")
+    @Transactional
     public List<RewardDTO> getAllRewards(RewardCriteria criteria, Pageable pageable) {
         log.debug("REST request to get Rewards by criteria: {}", criteria);
 
@@ -177,7 +184,7 @@ public class RewardResource {
                     completed = true;
                 }
 
-                return new RewardDTO(reward, completed);
+                return new RewardDTO(reward, completed, user.getLogin(), appUser.getId().toString());
             })
             .collect(Collectors.toList());
     }
@@ -224,7 +231,7 @@ public class RewardResource {
     }
 
     @PostMapping("/redeemReward")
-    public String redeemReward(@RequestParam Long rewardId) {
-        return rewardService.redeemReward(rewardId);
+    public String redeemReward(@RequestBody @Valid RedeemRewardDTO rewardDTO) {
+        return rewardService.redeemReward(rewardDTO.getRewardId());
     }
 }

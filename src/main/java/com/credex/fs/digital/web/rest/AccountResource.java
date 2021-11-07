@@ -1,19 +1,24 @@
 package com.credex.fs.digital.web.rest;
 
+import com.credex.fs.digital.domain.AppUser;
 import com.credex.fs.digital.domain.User;
+import com.credex.fs.digital.repository.AppUserRepository;
 import com.credex.fs.digital.repository.UserRepository;
 import com.credex.fs.digital.security.SecurityUtils;
 import com.credex.fs.digital.security.jwt.JWTFilter;
 import com.credex.fs.digital.security.jwt.TokenProvider;
+import com.credex.fs.digital.service.BlockchainService;
 import com.credex.fs.digital.service.MailService;
 import com.credex.fs.digital.service.UserService;
 import com.credex.fs.digital.service.dto.AdminUserDTO;
 import com.credex.fs.digital.service.dto.PasswordChangeDTO;
 import com.credex.fs.digital.service.dto.RegisterUserDTO;
+import com.credex.fs.digital.service.dto.UserWithBalance;
 import com.credex.fs.digital.web.rest.errors.*;
 import com.credex.fs.digital.web.rest.vm.KeyAndPasswordVM;
 import com.credex.fs.digital.web.rest.vm.ManagedUserVM;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +61,12 @@ public class AccountResource {
 
     @Autowired
     private TokenProvider tokenProvider;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private BlockchainService blockchainService;
 
     public AccountResource(UserRepository userRepository, UserService userService, MailService mailService) {
         this.userRepository = userRepository;
@@ -126,11 +137,15 @@ public class AccountResource {
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be returned.
      */
     @GetMapping("/account")
-    public AdminUserDTO getAccount() {
-        return userService
-            .getUserWithAuthorities()
-            .map(AdminUserDTO::new)
+    public UserWithBalance getAccount() throws ExecutionException, InterruptedException {
+        User user = userService.getUserWithAuthorities().orElseThrow(() -> new AccountResourceException("User could not be found"));
+        AppUser appUser = appUserRepository
+            .findAppUserByUserId(user.getId())
             .orElseThrow(() -> new AccountResourceException("User could not be found"));
+
+        String balance = blockchainService.balanceOf(appUser.getWalletPassword());
+
+        return new UserWithBalance(user, balance);
     }
 
     /**

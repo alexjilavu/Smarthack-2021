@@ -93,7 +93,7 @@ public class FantasticDeeds extends Contract {
     }
 
     @Deprecated
-    protected FantasticDeeds(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
+    public FantasticDeeds(String contractAddress, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
         super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
     }
 
