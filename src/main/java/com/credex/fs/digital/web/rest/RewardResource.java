@@ -24,6 +24,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -230,8 +231,16 @@ public class RewardResource {
             .build();
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    private static class RedeemResponse {
+
+        private String code;
+    }
+
     @PostMapping("/redeemReward")
-    public String redeemReward(@RequestBody @Valid RedeemRewardDTO rewardDTO) {
-        return rewardService.redeemReward(rewardDTO.getRewardId());
+    public RedeemResponse redeemReward(@RequestBody @Valid RedeemRewardDTO rewardDTO) {
+        return new RedeemResponse(rewardService.redeemReward(rewardDTO.getRewardId()));
     }
 }

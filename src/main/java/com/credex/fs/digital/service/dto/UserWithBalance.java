@@ -12,8 +12,11 @@ public class UserWithBalance extends AdminUserDTO {
 
     private String balance;
 
-    public UserWithBalance(User user, String balance) {
+    private String walletAddress;
+
+    public UserWithBalance(User user, String balance, String walletAddress) {
         super(user);
         this.balance = balance;
+        this.walletAddress = walletAddress;
     }
 }

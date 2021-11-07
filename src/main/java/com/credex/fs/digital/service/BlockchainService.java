@@ -24,9 +24,9 @@ public class BlockchainService {
 
     private static final String CONTRACT_ADDRESS = "0xD57Db7C6419851979e77D4F4b55189C6Da3ccE98";
 
-    private static final String BURN_WALLET_ADDRESS = "0x949d352fc92E611A57d2234eEd5CdDBD89F07a88";
+    private static final String BURN_WALLET_ADDRESS = "0x3AcecE1909Dd2360c4A34620d5308C557fFD7772";
 
-    private static final String MONEY_WALLET_ADDRESS = "0x14dFBE129740F5B09D8bde8bd4bbee392Cf25c96";
+    private static final String MONEY_WALLET_SECRET = "5c9b465dbee146b52a968590f2e4ac04f06e37b7e44ef7fd3369d3702bfd659c";
 
     private static final BigInteger GAS_PRICE = BigInteger.valueOf(0);
 
@@ -45,7 +45,7 @@ public class BlockchainService {
     }
 
     public void addTokens(String receiptAddr, Long amount) throws ExecutionException, InterruptedException {
-        Credentials credentials = Credentials.create(MONEY_WALLET_ADDRESS);
+        Credentials credentials = Credentials.create(MONEY_WALLET_SECRET);
         FantasticDeeds fantasticDeeds = new FantasticDeeds(CONTRACT_ADDRESS, web3j, credentials, GAS_PRICE, GAS_LIMIT);
 
         fantasticDeeds.approve(receiptAddr, BigInteger.valueOf(amount));

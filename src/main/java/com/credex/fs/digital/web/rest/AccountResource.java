@@ -145,7 +145,7 @@ public class AccountResource {
 
         String balance = blockchainService.balanceOf(appUser.getWalletPassword());
 
-        return new UserWithBalance(user, balance);
+        return new UserWithBalance(user, balance, appUser.getWalletAddress());
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.credex.fs.digital.domain;
 
 import java.io.Serializable;
+import java.time.Instant;
 import javax.persistence.*;
 
 /**
@@ -31,6 +32,12 @@ public class Post implements Serializable {
     @Column(name = "published_by")
     private String publishedBy;
 
+    @Column(name = "hash_tags")
+    private String hashTags;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
     @Column(name = "no_of_likes")
     private Integer noOfLikes;
 
@@ -38,6 +45,22 @@ public class Post implements Serializable {
     private Integer noOfShares;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
+    public String getHashTags() {
+        return hashTags;
+    }
+
+    public void setHashTags(String hashTags) {
+        this.hashTags = hashTags;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 
     public Long getId() {
         return this.id;
@@ -123,6 +146,16 @@ public class Post implements Serializable {
 
     public Post noOfShares(Integer noOfShares) {
         this.setNoOfShares(noOfShares);
+        return this;
+    }
+
+    public Post hashTags(String hashTags) {
+        this.setHashTags(hashTags);
+        return this;
+    }
+
+    public Post createdAt(Instant createdAt) {
+        this.setCreatedAt(createdAt);
         return this;
     }
 

@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
+import liquibase.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,9 @@ public class ChallengeService {
 
     @Autowired
     private BlockchainService blockchainService;
+
+    @Autowired
+    private PostService postService;
 
     public ChallengeService(ChallengeRepository challengeRepository, ComputerVisionService computerVisionService) {
         this.challengeRepository = challengeRepository;
@@ -165,9 +170,10 @@ public class ChallengeService {
             }
         }
 
-        if (challengeTags.isEmpty()) {
+        if (challengeTags.isEmpty() || (challengeTags.size() == 1 && StringUtils.isBlank(challengeTags.get(0)))) {
             AppUser appUser = appUserRepository.findAppUserByUserId(user.getId()).orElseThrow(EntityNotFoundException::new);
             appUser.addCompletedChallenges(challenge);
+            postService.sharePost(challenge, user, completeChallengeRequestDTO.getB64Image());
 
             try {
                 blockchainService.addTokens(appUser.getWalletAddress(), challenge.getRewardAmount());

@@ -1,14 +1,22 @@
 package com.credex.fs.digital.service;
 
+import com.credex.fs.digital.domain.Challenge;
+import com.credex.fs.digital.domain.HashTag;
 import com.credex.fs.digital.domain.Post;
+import com.credex.fs.digital.domain.User;
 import com.credex.fs.digital.repository.PostRepository;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.web3j.utils.Strings;
 
 /**
  * Service Implementation for managing {@link Post}.
@@ -104,5 +112,28 @@ public class PostService {
     public void delete(Long id) {
         log.debug("Request to delete Post : {}", id);
         postRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void sharePost(Challenge challenge, User user, String imageB64) {
+        String hashTags = "";
+        if (!CollectionUtils.isEmpty(challenge.getHashTags())) {
+            hashTags = Strings.join(challenge.getHashTags().stream().map(HashTag::getName).collect(Collectors.toList()), ",");
+        }
+
+        Post post = new Post()
+            .content(
+                String.format(
+                    "Hey! I've just completed the %s challenge and earned %d DEED!",
+                    challenge.getTitle(),
+                    challenge.getRewardAmount()
+                )
+            )
+            .imageUrl(Base64.getDecoder().decode(imageB64))
+            .publishedBy(user.getFirstName())
+            .createdAt(Instant.now())
+            .hashTags(hashTags);
+
+        postRepository.save(post);
     }
 }

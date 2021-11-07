@@ -4,12 +4,14 @@ import com.credex.fs.digital.domain.Challenge;
 import com.credex.fs.digital.repository.ChallengeRepository;
 import com.credex.fs.digital.service.ChallengeQueryService;
 import com.credex.fs.digital.service.ChallengeService;
+import com.credex.fs.digital.service.CognitiveServicesBing;
 import com.credex.fs.digital.service.ComputerVisionService;
 import com.credex.fs.digital.service.criteria.ChallengeCriteria;
 import com.credex.fs.digital.service.dto.ChallengeDTO;
 import com.credex.fs.digital.service.dto.CompleteChallengeDTO;
 import com.credex.fs.digital.service.dto.CompleteChallengeRequestDTO;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -52,6 +54,9 @@ public class ChallengeResource {
 
     @Autowired
     private ComputerVisionService computerVisionService;
+
+    @Autowired
+    private CognitiveServicesBing cognitiveServicesBing;
 
     public ChallengeResource(
         ChallengeService challengeService,
@@ -211,9 +216,8 @@ public class ChallengeResource {
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
             .build();
     }
-
-    @GetMapping("/testImage")
-    public void testImage() {
-        computerVisionService.analyzeImage();
-    }
+    //    @GetMapping("/testImage")
+    //    public String testImage() throws IOException {
+    //        return cognitiveServicesBing.searchImage();
+    //    }
 }

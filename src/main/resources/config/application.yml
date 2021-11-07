@@ -131,9 +131,11 @@ server:
       cookie:
         http-only: true
   ssl:
+    #    enable: true
     key-store: src/main/resources/ebininfosoft-ssl-key.p12
     key-store-password: alexandru
     key-store-type: PKCS12
+  port: 8080
 
 # Properties to be exposed on the /info management endpoint
 info:

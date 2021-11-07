@@ -25,6 +25,7 @@
     <include file="config/liquibase/changelog/20211106151030_added_entity_Transaction.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20211106150430_add_required_tags.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20211106150330_add_completed_rewards.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20211106150630_add_fields_on_Post.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <include file="config/liquibase/changelog/20211106150330_added_entity_constraints_AppUser.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20211106150430_added_entity_constraints_Challenge.xml" relativeToChangelogFile="false"/>
