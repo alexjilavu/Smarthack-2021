@@ -1,10 +1,16 @@
 package com.credex.fs.digital.service;
 
+import com.credex.fs.digital.domain.AppUser;
 import com.credex.fs.digital.domain.Reward;
+import com.credex.fs.digital.domain.User;
 import com.credex.fs.digital.repository.AppUserRepository;
 import com.credex.fs.digital.repository.RewardRepository;
 import com.credex.fs.digital.security.CustomerSecurityUtils;
+import java.math.BigInteger;
 import java.util.Optional;
+import javax.persistence.EntityNotFoundException;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +38,9 @@ public class RewardService {
 
     @Autowired
     private ChallengeQueryService challengeQueryService;
+
+    @Autowired
+    private BlockchainService blockchainService;
 
     public RewardService(RewardRepository rewardRepository) {
         this.rewardRepository = rewardRepository;
@@ -106,5 +115,19 @@ public class RewardService {
         rewardRepository.deleteById(id);
     }
 
-    public void redeemReward(Long rewardId) {}
+    @Transactional
+    public String redeemReward(Long rewardId) {
+        User user = customerSecurityUtils.getUser().orElseThrow(EntityNotFoundException::new);
+        AppUser appUser = appUserRepository.findAppUserByUserId(user.getId()).orElseThrow(EntityNotFoundException::new);
+
+        Reward reward = rewardRepository.findById(rewardId).orElseThrow(EntityNotFoundException::new);
+        log.info("Request to redeem {} by {}", reward.getContent(), appUser.getUser().getFirstName());
+
+        blockchainService.burn(appUser.getWalletAddress(), BigInteger.valueOf(reward.getValue()));
+        String identifier = String.format("{}_{}_{}", user.getLogin(), appUser.getId(), reward.getId());
+
+        reward.addUsersThatCompleteds(appUser);
+
+        return DigestUtils.sha256Hex(identifier).substring(0, 8);
+    }
 }

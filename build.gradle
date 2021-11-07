@@ -275,6 +275,8 @@ dependencies {
 
     implementation "com.microsoft.azure.cognitiveservices:azure-cognitiveservices-computervision:1.0.6-beta"
     implementation ('org.web3j:core:4.8.7')
+    implementation 'commons-codec:commons-codec:1.15'
+
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 

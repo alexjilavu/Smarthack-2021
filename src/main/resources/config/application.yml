@@ -130,6 +130,10 @@ server:
     session:
       cookie:
         http-only: true
+  ssl:
+    key-store: src/main/resources/ebininfosoft-ssl-key.p12
+    key-store-password: alexandru
+    key-store-type: PKCS12
 
 # Properties to be exposed on the /info management endpoint
 info:

@@ -40,7 +40,36 @@ public class AppUser implements Serializable {
     @JsonIgnoreProperties(value = { "icon", "hashTags", "usersThatCompleteds" }, allowSetters = true)
     private Set<Challenge> completedChallenges = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+        name = "rel_app_user__completed_rewards",
+        joinColumns = @JoinColumn(name = "app_user_id"),
+        inverseJoinColumns = @JoinColumn(name = "completed_rewards_id")
+    )
+    @JsonIgnoreProperties(value = { "icon", "company", "usersThatCompleteds" }, allowSetters = true)
+    private Set<Reward> completedRewards = new HashSet<>();
+
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
+    public Set<Reward> getCompletedRewards() {
+        return completedRewards;
+    }
+
+    public void setCompletedRewards(Set<Reward> completedRewards) {
+        this.completedRewards = completedRewards;
+    }
+
+    public AppUser addCompletedRewards(Reward reward) {
+        this.completedRewards.add(reward);
+        reward.getUsersThatCompleteds().add(this);
+        return this;
+    }
+
+    public AppUser removeCompletedRewards(Reward reward) {
+        this.completedRewards.remove(reward);
+        reward.getUsersThatCompleteds().remove(this);
+        return this;
+    }
 
     public Long getId() {
         return this.id;

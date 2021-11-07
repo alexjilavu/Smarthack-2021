@@ -2,6 +2,8 @@ package com.credex.fs.digital.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import javax.persistence.*;
 
 /**
@@ -32,7 +34,31 @@ public class Reward implements Serializable {
     @JsonIgnoreProperties(value = { "rewards" }, allowSetters = true)
     private Company company;
 
+    @ManyToMany(mappedBy = "completedRewards")
+    @JsonIgnoreProperties(value = { "appUser", "completedChallenges" }, allowSetters = true)
+    private Set<AppUser> usersThatCompleteds = new HashSet<>();
+
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
+    public Set<AppUser> getUsersThatCompleteds() {
+        return usersThatCompleteds;
+    }
+
+    public void setUsersThatCompleteds(Set<AppUser> usersThatCompleteds) {
+        this.usersThatCompleteds = usersThatCompleteds;
+    }
+
+    public Reward addUsersThatCompleteds(AppUser appUser) {
+        this.usersThatCompleteds.add(appUser);
+        appUser.getCompletedRewards().add(this);
+        return this;
+    }
+
+    public Reward removeUsersThatCompleteds(AppUser appUser) {
+        this.usersThatCompleteds.remove(appUser);
+        appUser.getCompletedRewards().remove(this);
+        return this;
+    }
 
     public Long getId() {
         return this.id;

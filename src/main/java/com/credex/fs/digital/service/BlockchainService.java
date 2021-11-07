@@ -1,5 +1,6 @@
 package com.credex.fs.digital.service;
 
+import java.math.BigInteger;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,4 +24,6 @@ public class BlockchainService {
         ethAccounts.getAccounts().forEach(log::info);
         //log.info(" The Block Number is: " + result.getBlockNumber().toString());
     }
+
+    public void burn(String walletAddress, BigInteger valueOf) {}
 }

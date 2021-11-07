@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.5.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <changeSet id="complete-rewards" author="jhipster">
+
+        <createTable tableName="rel_app_user__completed_rewards">
+            <column name="completed_rewards_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="app_user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey columnNames="app_user_id, completed_rewards_id" tableName="rel_app_user__completed_rewards"/>
+
+        <addForeignKeyConstraint baseColumnNames="app_user_id"
+                                 baseTableName="rel_app_user__completed_rewards"
+                                 constraintName="fk_rel_app_user__completed_rewards__app_user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="app_user"/>
+
+        <addForeignKeyConstraint baseColumnNames="completed_rewards_id"
+                                 baseTableName="rel_app_user__completed_rewards"
+                                 constraintName="fk_rel_app_user__completed_rewards__completed_rewards_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="reward"/>
+    </changeSet>
+
+</databaseChangeLog>

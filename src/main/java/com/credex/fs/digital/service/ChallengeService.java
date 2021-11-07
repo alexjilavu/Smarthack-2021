@@ -145,7 +145,10 @@ public class ChallengeService {
 
         log.info("User {} trying to complete challenge {}", user.getLogin(), challenge.getTitle());
 
-        List<String> challengeTags = new ArrayList<>(List.of(challenge.getRequiredTags().split(",")));
+        List<String> challengeTags = new ArrayList<>();
+        if (challenge.getRequiredTags() != null) {
+            challengeTags = new ArrayList<>(List.of(challenge.getRequiredTags().split(",")));
+        }
         List<ImageTag> tags = computerVisionService.analyzeImage(completeChallengeRequestDTO.getB64Image());
 
         for (ImageTag tag : tags) {

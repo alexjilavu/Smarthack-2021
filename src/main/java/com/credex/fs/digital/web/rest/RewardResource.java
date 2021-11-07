@@ -1,18 +1,27 @@
 package com.credex.fs.digital.web.rest;
 
+import com.credex.fs.digital.domain.AppUser;
 import com.credex.fs.digital.domain.Reward;
+import com.credex.fs.digital.domain.User;
+import com.credex.fs.digital.repository.AppUserRepository;
 import com.credex.fs.digital.repository.RewardRepository;
+import com.credex.fs.digital.security.CustomerSecurityUtils;
 import com.credex.fs.digital.service.RewardQueryService;
 import com.credex.fs.digital.service.RewardService;
 import com.credex.fs.digital.service.criteria.RewardCriteria;
+import com.credex.fs.digital.service.dto.ChallengeDTO;
+import com.credex.fs.digital.service.dto.RewardDTO;
 import com.credex.fs.digital.web.rest.errors.BadRequestAlertException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +53,12 @@ public class RewardResource {
     private final RewardRepository rewardRepository;
 
     private final RewardQueryService rewardQueryService;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private CustomerSecurityUtils customerSecurityUtils;
 
     public RewardResource(RewardService rewardService, RewardRepository rewardRepository, RewardQueryService rewardQueryService) {
         this.rewardService = rewardService;
@@ -147,11 +162,24 @@ public class RewardResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of rewards in body.
      */
     @GetMapping("/rewards")
-    public ResponseEntity<List<Reward>> getAllRewards(RewardCriteria criteria, Pageable pageable) {
+    public List<RewardDTO> getAllRewards(RewardCriteria criteria, Pageable pageable) {
         log.debug("REST request to get Rewards by criteria: {}", criteria);
-        Page<Reward> page = rewardQueryService.findByCriteria(criteria, pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return ResponseEntity.ok().headers(headers).body(page.getContent());
+
+        User user = customerSecurityUtils.getUser().orElseThrow(EntityNotFoundException::new);
+        AppUser appUser = appUserRepository.findAppUserByUserId(user.getId()).orElseThrow(EntityNotFoundException::new);
+
+        return rewardQueryService
+            .findByCriteria(criteria)
+            .stream()
+            .map(reward -> {
+                boolean completed = false;
+                if (appUser.getCompletedRewards().contains(reward)) {
+                    completed = true;
+                }
+
+                return new RewardDTO(reward, completed);
+            })
+            .collect(Collectors.toList());
     }
 
     /**
@@ -196,7 +224,7 @@ public class RewardResource {
     }
 
     @PostMapping("/redeemReward")
-    public void redeemReward(@RequestParam Long rewardId) {
-        rewardService.redeemReward(rewardId);
+    public String redeemReward(@RequestParam Long rewardId) {
+        return rewardService.redeemReward(rewardId);
     }
 }
