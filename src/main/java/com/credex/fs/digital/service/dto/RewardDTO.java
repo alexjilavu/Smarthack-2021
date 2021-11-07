@@ -29,7 +29,7 @@ public class RewardDTO {
 
     private String code;
 
-    public RewardDTO(Reward reward, boolean completed, String userLogin, String appUserId) {
+    public RewardDTO(Reward reward, boolean completed, String userLogin, Long appUserId) {
         this.id = reward.getId();
         this.value = reward.getValue();
         this.content = reward.getContent();
@@ -38,7 +38,7 @@ public class RewardDTO {
         this.completed = completed;
 
         if (completed) {
-            String identifier = String.format("{}_{}_{}", userLogin, appUserId, reward.getId());
+            String identifier = String.format("%s_%d_%d", userLogin, appUserId, reward.getId());
             this.code = DigestUtils.sha256Hex(identifier).substring(0, 8);
         }
     }

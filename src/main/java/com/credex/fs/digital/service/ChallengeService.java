@@ -159,18 +159,18 @@ public class ChallengeService {
             challengeTags = new ArrayList<>(List.of(challenge.getRequiredTags().split(",")));
         }
         List<ImageTag> tags = computerVisionService.analyzeImage(completeChallengeRequestDTO.getB64Image());
+        int tagsRecognized = 0;
 
         for (ImageTag tag : tags) {
             if (challengeTags.contains(tag.name().toLowerCase())) {
-                if (tag.confidence() < 0.90d) {
-                    break;
+                if (tag.confidence() > 0.80d) {
+                    tagsRecognized++;
+                    challengeTags.remove(tag.name());
                 }
-
-                challengeTags.remove(tag.name());
             }
         }
 
-        if (challengeTags.isEmpty() || (challengeTags.size() == 1 && StringUtils.isBlank(challengeTags.get(0)))) {
+        if (tagsRecognized > 0) {
             AppUser appUser = appUserRepository.findAppUserByUserId(user.getId()).orElseThrow(EntityNotFoundException::new);
             appUser.addCompletedChallenges(challenge);
             postService.sharePost(challenge, user, completeChallengeRequestDTO.getB64Image());

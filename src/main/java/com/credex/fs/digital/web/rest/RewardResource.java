@@ -185,7 +185,7 @@ public class RewardResource {
                     completed = true;
                 }
 
-                return new RewardDTO(reward, completed, user.getLogin(), appUser.getId().toString());
+                return new RewardDTO(reward, completed, user.getLogin(), appUser.getId());
             })
             .collect(Collectors.toList());
     }

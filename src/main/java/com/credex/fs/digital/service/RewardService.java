@@ -125,12 +125,16 @@ public class RewardService {
         log.info("Request to redeem {} by {}", reward.getContent(), appUser.getUser().getFirstName());
 
         try {
+            long balance = Long.parseLong(blockchainService.balanceOf(appUser.getWalletPassword()));
+            if (balance < reward.getValue()) {
+                throw new RuntimeException("Balance is lower than reward value");
+            }
             blockchainService.burn(appUser.getWalletPassword(), reward.getValue());
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
 
-        String identifier = String.format("{}_{}_{}", user.getLogin(), appUser.getId(), reward.getId());
+        String identifier = String.format("%s_%d_%d", user.getLogin(), appUser.getId(), reward.getId());
 
         reward.addUsersThatCompleteds(appUser);
 
